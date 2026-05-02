@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Ideas Tracker</string>
+    <string name="title_done">Done</string>
+    <string name="title_ongoing">Ongoing</string>
+    <string name="title_future">Future</string>
+    <string name="add_idea">Add Idea</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="link">Link (optional)</string>
+    <string name="sort_newest">Sort: Newest</string>
+    <string name="sort_oldest">Sort: Oldest</string>
+    <string name="move_to_ongoing">Start</string>
+    <string name="move_to_done">Finish</string>
+    <string name="move_to_future">Revert</string>
+</resources>
