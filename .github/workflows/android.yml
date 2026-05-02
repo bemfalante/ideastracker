@@ -45,3 +45,4 @@ jobs:
       with:
         name: IdeasTracker-APK
         path: app/build/outputs/apk/debug/app-debug.apk
+# Final build trigger with ownership transfer enabled
