@@ -34,3 +34,4 @@ jobs:
         folderId: ${{ secrets.GDRIVE_FOLDER_ID }}
         overwrite: "true"
 # Triggering build with configured secrets
+# Verification: User updated secrets to Base64
