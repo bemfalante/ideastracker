@@ -34,3 +34,4 @@ jobs:
         folderId: ${{ secrets.GDRIVE_FOLDER_ID }}
         name: IdeasTracker.apk
         overwrite: "true"
+# Final trigger with new Folder ID: 15V0HyTGbKuvEO0PDRDYEGaks6D5167d-
