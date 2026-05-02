@@ -26,11 +26,8 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    - name: Upload to Google Drive
-      uses: adityak74/google-drive-upload-git-action@main
+    - name: Upload APK as Artifact
+      uses: actions/upload-artifact@v4
       with:
-        credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
-        filename: app/build/outputs/apk/debug/app-debug.apk
-        folderId: ${{ secrets.GDRIVE_FOLDER_ID }}
-        name: IdeasTracker.apk
-        overwrite: "true"
+        name: IdeasTracker-APK
+        path: app/build/outputs/apk/debug/app-debug.apk
