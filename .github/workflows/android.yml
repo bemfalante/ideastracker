@@ -23,14 +23,13 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build with Gradle
-      run: ./gradlew build
-
     - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+    - name: Upload to Google Drive
+      uses: adityak74/google-drive-upload-git-action@main
       with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
+        filename: app/build/outputs/apk/debug/app-debug.apk
+        folderId: ${{ secrets.GDRIVE_FOLDER_ID }}
+        overwrite: "true"
