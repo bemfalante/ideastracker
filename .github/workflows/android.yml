@@ -26,12 +26,17 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    - name: Upload to Google Drive
-      uses: adityak74/google-drive-upload-git-action@main
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
-        filename: app/build/outputs/apk/debug/app-debug.apk
-        folderId: ${{ secrets.GDRIVE_FOLDER_ID }}
-        name: IdeasTracker.apk
-        overwrite: "true"
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+    - name: Upload to Google Drive
+      run: |
+        python upload_to_gdrive.py app/build/outputs/apk/debug/app-debug.apk ${{ secrets.GDRIVE_FOLDER_ID }} ${{ secrets.GDRIVE_CREDENTIALS }}
 # Final trigger with new Folder ID: 15V0HyTGbKuvEO0PDRDYEGaks6D5167d-
