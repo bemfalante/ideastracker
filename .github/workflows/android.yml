@@ -32,12 +32,11 @@ jobs:
     - name: Configure Rclone
       run: |
         mkdir -p ~/.config/rclone
-        cat << EOF > ~/.config/rclone/rclone.conf
-        [gdrive]
-        type = drive
-        service_account_credentials = $(echo "${{ secrets.GDRIVE_CREDENTIALS }}" | base64 -d)
-        scope = drive
-        EOF
+        echo "${{ secrets.GDRIVE_CREDENTIALS }}" | base64 -d > sa.json
+        echo "[gdrive]" > ~/.config/rclone/rclone.conf
+        echo "type = drive" >> ~/.config/rclone/rclone.conf
+        echo "service_account_file = $(pwd)/sa.json" >> ~/.config/rclone/rclone.conf
+        echo "scope = drive" >> ~/.config/rclone/rclone.conf
 
     - name: Upload to Google Drive using Rclone
       run: |
