@@ -29,19 +29,20 @@ jobs:
     - name: Install Rclone
       run: sudo apt-get update && sudo apt-get install -y rclone
 
-    - name: Configure Rclone
+    - name: Configure Rclone (OAuth2)
       run: |
         mkdir -p ~/.config/rclone
-        echo "${{ secrets.GDRIVE_CREDENTIALS }}" | base64 -d > sa.json
-        echo "[gdrive]" > ~/.config/rclone/rclone.conf
-        echo "type = drive" >> ~/.config/rclone/rclone.conf
-        echo "service_account_file = $(pwd)/sa.json" >> ~/.config/rclone/rclone.conf
-        echo "scope = drive" >> ~/.config/rclone/rclone.conf
+        cat << EOF > ~/.config/rclone/rclone.conf
+        [gdrive]
+        type = drive
+        client_id = ${{ secrets.GDRIVE_CLIENT_ID }}
+        client_secret = ${{ secrets.GDRIVE_CLIENT_SECRET }}
+        token = {"access_token":"","token_type":"Bearer","refresh_token":"${{ secrets.GDRIVE_REFRESH_TOKEN }}","expiry":"2000-01-01T00:00:00Z"}
+        scope = drive
+        EOF
 
     - name: Upload to Google Drive using Rclone
       run: |
         rclone copyto app/build/outputs/apk/debug/app-debug.apk gdrive:${{ secrets.GDRIVE_FOLDER_ID }}/IdeasTracker.apk \
         --drive-acknowledge-abuse \
-        --drive-keep-revision-forever=false \
-        --drive-upload-cutoff 0 \
         -v
