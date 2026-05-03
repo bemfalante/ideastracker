@@ -39,20 +39,33 @@ class AddIdeaDialog : DialogFragment() {
         existingIdea?.let { idea ->
             binding.tvDialogTitle.text = "Edit Idea"
             binding.etTitle.setText(idea.title)
+            binding.etCategory.setText(idea.category)
             binding.etDescription.setText(idea.description)
             binding.etLink.setText(idea.link)
         }
 
         binding.btnSave.setOnClickListener {
             val title = binding.etTitle.text.toString()
+            val category = binding.etCategory.text.toString().takeIf { it.isNotBlank() }
             val description = binding.etDescription.text.toString()
             val link = binding.etLink.text.toString().takeIf { it.isNotBlank() }
 
             if (title.isNotBlank()) {
                 if (existingIdea != null) {
-                    viewModel.update(existingIdea!!.copy(title = title, description = description, link = link))
+                    viewModel.update(existingIdea!!.copy(
+                        title = title,
+                        category = category,
+                        description = description,
+                        link = link
+                    ))
                 } else {
-                    viewModel.insert(Idea(title = title, description = description, link = link, status = IdeaStatus.ONGOING))
+                    viewModel.insert(Idea(
+                        title = title,
+                        category = category,
+                        description = description,
+                        link = link,
+                        status = IdeaStatus.ONGOING
+                    ))
                 }
                 dismiss()
             } else {

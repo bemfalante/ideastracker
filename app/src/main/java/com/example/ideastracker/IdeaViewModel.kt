@@ -14,7 +14,7 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
 
     fun getIdeas(status: IdeaStatus): LiveData<List<Idea>> {
         return _isAsc.switchMap { asc ->
-            dao.getIdeasByStatus(status, asc)
+            dao.getIdeasByStatus(status, asc ?: 0)
         }
     }
 
@@ -28,9 +28,27 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
 
     fun updateStatus(idea: Idea, newStatus: IdeaStatus) = viewModelScope.launch {
         val updatedIdea = when (newStatus) {
-            IdeaStatus.ONGOING -> idea.copy(status = newStatus, startedTimestamp = idea.startedTimestamp ?: System.currentTimeMillis())
-            IdeaStatus.DONE -> idea.copy(status = newStatus, finishedTimestamp = idea.finishedTimestamp ?: System.currentTimeMillis())
-            IdeaStatus.FUTURE -> idea.copy(status = newStatus)
+            IdeaStatus.ONGOING -> {
+                // If moving to ONGOING from FUTURE, add "Definition of Done" and "Next Steps"
+                if (idea.status == IdeaStatus.FUTURE) {
+                    idea.copy(
+                        status = newStatus,
+                        startedTimestamp = System.currentTimeMillis(),
+                        definitionOfDone = idea.definitionOfDone ?: "Definition of Done:",
+                        nextSteps = idea.nextSteps ?: "Next Steps:"
+                    )
+                } else {
+                    // Reverting from DONE
+                    idea.copy(status = newStatus, finishedTimestamp = null)
+                }
+            }
+            IdeaStatus.DONE -> {
+                idea.copy(status = newStatus, finishedTimestamp = System.currentTimeMillis())
+            }
+            IdeaStatus.FUTURE -> {
+                // Reverting from ONGOING
+                idea.copy(status = newStatus, startedTimestamp = null, finishedTimestamp = null)
+            }
         }
         dao.update(updatedIdea)
     }

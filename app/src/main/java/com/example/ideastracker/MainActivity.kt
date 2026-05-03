@@ -3,6 +3,7 @@ package com.example.ideastracker
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.viewpager2.widget.ViewPager2
 import com.example.ideastracker.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
 
@@ -31,6 +32,13 @@ class MainActivity : AppCompatActivity() {
         }.attach()
 
         binding.viewPager.setCurrentItem(1, false) // Start at Ongoing
+        updateNavHeader(1)
+
+        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                updateNavHeader(position)
+            }
+        })
 
         viewModel.isAsc.observe(this) { isAsc ->
             binding.btnSort.text = if (isAsc == 1) getString(R.string.sort_oldest) else getString(R.string.sort_newest)
@@ -43,10 +51,43 @@ class MainActivity : AppCompatActivity() {
         binding.fabAdd.setOnClickListener {
             showAddIdeaDialog()
         }
+
+        binding.btnCalendar.setOnClickListener {
+            showCalendarDialog()
+        }
+    }
+
+    private fun updateNavHeader(position: Int) {
+        val done = getString(R.string.title_done)
+        val ongoing = getString(R.string.title_ongoing)
+        val future = getString(R.string.title_future)
+
+        when (position) {
+            0 -> { // Done
+                binding.tvLeftNav.text = ""
+                binding.tvCenterNav.text = done
+                binding.tvRightNav.text = "$ongoing →"
+            }
+            1 -> { // Ongoing
+                binding.tvLeftNav.text = "← $done"
+                binding.tvCenterNav.text = ongoing
+                binding.tvRightNav.text = "$future →"
+            }
+            2 -> { // Future
+                binding.tvLeftNav.text = "← $ongoing"
+                binding.tvCenterNav.text = future
+                binding.tvRightNav.text = ""
+            }
+        }
     }
 
     private fun showAddIdeaDialog() {
-        val dialog = AddIdeaDialog()
+        val dialog = AddIdeaDialog.newInstance()
         dialog.show(supportFragmentManager, "AddIdeaDialog")
+    }
+
+    private fun showCalendarDialog() {
+        val dialog = CalendarDialog()
+        dialog.show(supportFragmentManager, "CalendarDialog")
     }
 }

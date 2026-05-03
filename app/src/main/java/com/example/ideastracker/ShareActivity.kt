@@ -24,12 +24,19 @@ class ShareActivity : AppCompatActivity() {
 
         binding.btnSave.setOnClickListener {
             val title = binding.etTitle.text.toString()
+            val category = binding.etCategory.text.toString().takeIf { it.isNotBlank() }
             val description = binding.etDescription.text.toString()
             val link = binding.etLink.text.toString().takeIf { it.isNotBlank() }
 
             if (title.isNotBlank()) {
                 lifecycleScope.launch {
-                    dao.insert(Idea(title = title, description = description, link = link, status = IdeaStatus.FUTURE))
+                    dao.insert(Idea(
+                        title = title,
+                        category = category,
+                        description = description,
+                        link = link,
+                        status = IdeaStatus.FUTURE
+                    ))
                     finish()
                 }
             } else {
@@ -45,8 +52,6 @@ class ShareActivity : AppCompatActivity() {
     private fun handleSendText(intent: Intent) {
         intent.getStringExtra(Intent.EXTRA_TEXT)?.let { sharedText ->
             binding.etLink.setText(sharedText)
-            // If it's a URL, we might want to put it in the link field.
-            // Often social media sharing includes some text + URL.
         }
     }
 }
