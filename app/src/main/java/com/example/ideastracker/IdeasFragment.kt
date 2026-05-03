@@ -25,8 +25,9 @@ class IdeasFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val status = arguments?.getSerializable("status") as IdeaStatus
         val adapter = IdeaAdapter(
-            onMove = { idea, newStatus -> viewModel.updateStatus(idea.id, newStatus) },
-            onDelete = { idea -> viewModel.delete(idea) }
+            onMove = { idea, newStatus -> viewModel.updateStatus(idea, newStatus) },
+            onDelete = { idea -> viewModel.delete(idea) },
+            onClick = { idea -> showEditDialog(idea) }
         )
 
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
@@ -35,6 +36,11 @@ class IdeasFragment : Fragment() {
         viewModel.getIdeas(status).observe(viewLifecycleOwner) { ideas ->
             adapter.submitList(ideas)
         }
+    }
+
+    private fun showEditDialog(idea: Idea) {
+        val dialog = AddIdeaDialog.newInstance(idea)
+        dialog.show(parentFragmentManager, "EditIdeaDialog")
     }
 
     override fun onDestroyView() {

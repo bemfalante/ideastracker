@@ -2,6 +2,7 @@ package com.example.ideastracker
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.io.Serializable
 
 enum class IdeaStatus {
     DONE, ONGOING, FUTURE
@@ -14,5 +15,7 @@ data class Idea(
     val description: String,
     val link: String?,
     val status: IdeaStatus,
-    val timestamp: Long = System.currentTimeMillis()
-)
+    val timestamp: Long = System.currentTimeMillis(),
+    val startedTimestamp: Long? = null,
+    val finishedTimestamp: Long? = null
+) : Serializable

@@ -22,8 +22,17 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
         dao.insert(idea)
     }
 
-    fun updateStatus(id: Int, newStatus: IdeaStatus) = viewModelScope.launch {
-        dao.updateStatus(id, newStatus)
+    fun update(idea: Idea) = viewModelScope.launch {
+        dao.update(idea)
+    }
+
+    fun updateStatus(idea: Idea, newStatus: IdeaStatus) = viewModelScope.launch {
+        val updatedIdea = when (newStatus) {
+            IdeaStatus.ONGOING -> idea.copy(status = newStatus, startedTimestamp = idea.startedTimestamp ?: System.currentTimeMillis())
+            IdeaStatus.DONE -> idea.copy(status = newStatus, finishedTimestamp = idea.finishedTimestamp ?: System.currentTimeMillis())
+            IdeaStatus.FUTURE -> idea.copy(status = newStatus)
+        }
+        dao.update(updatedIdea)
     }
 
     fun delete(idea: Idea) = viewModelScope.launch {

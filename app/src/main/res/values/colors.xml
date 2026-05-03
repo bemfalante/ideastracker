@@ -1,11 +1,11 @@
 <resources>
-    <!-- Pantone 11-4201 Cloud Dancer -->
-    <color name="cloud_dancer">#F0EEE9</color>
+    <!-- Pantone 14-0848 Mimosa -->
+    <color name="mimosa">#F0C05A</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="gray">#888888</color>
 
-    <color name="colorPrimary">#F0EEE9</color>
-    <color name="colorPrimaryDark">#D6D4CF</color>
+    <color name="colorPrimary">#F0C05A</color>
+    <color name="colorPrimaryDark">#D6A84E</color>
     <color name="colorAccent">#000000</color>
 </resources>

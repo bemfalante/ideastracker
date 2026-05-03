@@ -16,6 +16,13 @@ class AddIdeaDialog : DialogFragment() {
         IdeaViewModelFactory(AppDatabase.getDatabase(requireContext()).ideaDao())
     }
 
+    private var existingIdea: Idea? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        existingIdea = arguments?.getSerializable(ARG_IDEA) as? Idea
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = DialogAddIdeaBinding.inflate(inflater, container, false)
         return binding.root
@@ -29,13 +36,24 @@ class AddIdeaDialog : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        existingIdea?.let { idea ->
+            binding.tvDialogTitle.text = "Edit Idea"
+            binding.etTitle.setText(idea.title)
+            binding.etDescription.setText(idea.description)
+            binding.etLink.setText(idea.link)
+        }
+
         binding.btnSave.setOnClickListener {
             val title = binding.etTitle.text.toString()
             val description = binding.etDescription.text.toString()
             val link = binding.etLink.text.toString().takeIf { it.isNotBlank() }
 
             if (title.isNotBlank()) {
-                viewModel.insert(Idea(title = title, description = description, link = link, status = IdeaStatus.ONGOING))
+                if (existingIdea != null) {
+                    viewModel.update(existingIdea!!.copy(title = title, description = description, link = link))
+                } else {
+                    viewModel.insert(Idea(title = title, description = description, link = link, status = IdeaStatus.ONGOING))
+                }
                 dismiss()
             } else {
                 binding.etTitle.error = "Title is required"
@@ -50,5 +68,15 @@ class AddIdeaDialog : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    companion object {
+        private const val ARG_IDEA = "idea"
+
+        fun newInstance(idea: Idea? = null) = AddIdeaDialog().apply {
+            arguments = Bundle().apply {
+                putSerializable(ARG_IDEA, idea)
+            }
+        }
     }
 }

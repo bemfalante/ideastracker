@@ -7,11 +7,16 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ideastracker.databinding.ItemIdeaBinding
+import java.text.SimpleDateFormat
+import java.util.*
 
 class IdeaAdapter(
     private val onMove: (Idea, IdeaStatus) -> Unit,
-    private val onDelete: (Idea) -> Unit
+    private val onDelete: (Idea) -> Unit,
+    private val onClick: (Idea) -> Unit
 ) : ListAdapter<Idea, IdeaAdapter.IdeaViewHolder>(IdeaDiffCallback()) {
+
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): IdeaViewHolder {
         val binding = ItemIdeaBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -28,6 +33,12 @@ class IdeaAdapter(
             binding.tvDescription.text = idea.description
             binding.tvLink.text = idea.link
             binding.tvLink.visibility = if (idea.link.isNullOrEmpty()) View.GONE else View.VISIBLE
+
+            val dateText = StringBuilder()
+            dateText.append("Created: ${dateFormat.format(Date(idea.timestamp))}")
+            idea.startedTimestamp?.let { dateText.append("\nStarted: ${dateFormat.format(Date(it))}") }
+            idea.finishedTimestamp?.let { dateText.append("\nFinished: ${dateFormat.format(Date(it))}") }
+            binding.tvDates.text = dateText.toString()
 
             when (idea.status) {
                 IdeaStatus.FUTURE -> {
@@ -53,6 +64,7 @@ class IdeaAdapter(
             }
 
             binding.btnDelete.setOnClickListener { onDelete(idea) }
+            binding.itemContainer.setOnClickListener { onClick(idea) }
         }
     }
 
