@@ -26,22 +26,23 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
+    - name: Install Rclone
+      run: sudo apt-get update && sudo apt-get install -y rclone
 
-    - name: Install dependencies
+    - name: Configure Rclone
       run: |
-        python -m pip install --upgrade pip
-        pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib requests
+        mkdir -p ~/.config/rclone
+        cat << EOF > ~/.config/rclone/rclone.conf
+        [gdrive]
+        type = drive
+        service_account_credentials = $(echo "${{ secrets.GDRIVE_CREDENTIALS }}" | base64 -d)
+        scope = drive
+        EOF
 
-    - name: Upload to Google Drive (OAuth2)
+    - name: Upload to Google Drive using Rclone
       run: |
-        python upload_with_oauth.py app/build/outputs/apk/debug/app-debug.apk ${{ secrets.GDRIVE_FOLDER_ID }} ${{ secrets.GDRIVE_CLIENT_ID }} ${{ secrets.GDRIVE_CLIENT_SECRET }} ${{ secrets.GDRIVE_REFRESH_TOKEN }}
-
-    - name: Upload APK as Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: IdeasTracker-APK
-        path: app/build/outputs/apk/debug/app-debug.apk
+        rclone copyto app/build/outputs/apk/debug/app-debug.apk gdrive:${{ secrets.GDRIVE_FOLDER_ID }}/IdeasTracker.apk \
+        --drive-acknowledge-abuse \
+        --drive-keep-revision-forever=false \
+        --drive-upload-cutoff 0 \
+        -v
