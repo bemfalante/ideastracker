@@ -42,6 +42,8 @@ class AddIdeaDialog : DialogFragment() {
             binding.etCategory.setText(idea.category)
             binding.etDescription.setText(idea.description)
             binding.etLink.setText(idea.link)
+            binding.etDoD.setText(idea.definitionOfDone)
+            binding.etNextSteps.setText(idea.nextSteps)
         }
 
         binding.btnSave.setOnClickListener {
@@ -49,6 +51,8 @@ class AddIdeaDialog : DialogFragment() {
             val category = binding.etCategory.text.toString().takeIf { it.isNotBlank() }
             val description = binding.etDescription.text.toString()
             val link = binding.etLink.text.toString().takeIf { it.isNotBlank() }
+            val dod = binding.etDoD.text.toString().takeIf { it.isNotBlank() }
+            val nextSteps = binding.etNextSteps.text.toString().takeIf { it.isNotBlank() }
 
             if (title.isNotBlank()) {
                 if (existingIdea != null) {
@@ -56,7 +60,9 @@ class AddIdeaDialog : DialogFragment() {
                         title = title,
                         category = category,
                         description = description,
-                        link = link
+                        link = link,
+                        definitionOfDone = dod,
+                        nextSteps = nextSteps
                     ))
                 } else {
                     viewModel.insert(Idea(
@@ -64,7 +70,7 @@ class AddIdeaDialog : DialogFragment() {
                         category = category,
                         description = description,
                         link = link,
-                        status = IdeaStatus.ONGOING
+                        status = IdeaStatus.FUTURE // Changed to FUTURE
                     ))
                 }
                 dismiss()

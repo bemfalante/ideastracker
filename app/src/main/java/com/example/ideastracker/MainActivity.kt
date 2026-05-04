@@ -40,6 +40,16 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        // Navigation through header clicks
+        binding.tvLeftNav.setOnClickListener {
+            val current = binding.viewPager.currentItem
+            if (current > 0) binding.viewPager.currentItem = current - 1
+        }
+        binding.tvRightNav.setOnClickListener {
+            val current = binding.viewPager.currentItem
+            if (current < 2) binding.viewPager.currentItem = current + 1
+        }
+
         viewModel.isAsc.observe(this) { isAsc ->
             binding.btnSort.text = if (isAsc == 1) getString(R.string.sort_oldest) else getString(R.string.sort_newest)
         }
