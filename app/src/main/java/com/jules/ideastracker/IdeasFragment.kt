@@ -66,7 +66,7 @@ class IdeasFragment : Fragment() {
                 it.write(content.toByteArray())
             }
 
-            val authority = "${requireContext().packageName}.provider"
+            val authority = "com.jules.ideastracker.provider"
             val uri: Uri = FileProvider.getUriForFile(
                 requireContext(),
                 authority,
