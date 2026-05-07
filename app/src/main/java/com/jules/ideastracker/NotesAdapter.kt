@@ -1,11 +1,11 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.ideastracker.databinding.ItemNoteBinding
+import com.jules.ideastracker.databinding.ItemNoteBinding
 
 class NotesAdapter(private val onDelete: (Note) -> Unit) : ListAdapter<Note, NotesAdapter.NoteViewHolder>(NoteDiffCallback()) {
 

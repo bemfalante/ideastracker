@@ -1,4 +1,4 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.ideastracker.databinding.ItemIdeaBinding
+import com.jules.ideastracker.databinding.ItemIdeaBinding
 import java.text.SimpleDateFormat
 import java.util.*
 

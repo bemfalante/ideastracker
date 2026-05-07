@@ -1,4 +1,4 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import android.content.Intent
 import android.net.Uri
@@ -10,7 +10,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.ideastracker.databinding.FragmentIdeasBinding
+import com.jules.ideastracker.databinding.FragmentIdeasBinding
 import java.io.File
 import java.io.FileOutputStream
 

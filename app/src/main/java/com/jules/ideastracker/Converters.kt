@@ -1,4 +1,4 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import androidx.room.TypeConverter
 

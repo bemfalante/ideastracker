@@ -1,10 +1,10 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
-import com.example.ideastracker.databinding.ActivityMainBinding
+import com.jules.ideastracker.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
 
 class MainActivity : AppCompatActivity() {

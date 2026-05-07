@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.ideastracker'
+    namespace 'com.jules.ideastracker'
     compileSdk 34
 
     signingConfigs {
@@ -18,7 +18,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.ideastracker"
+        applicationId "com.jules.ideastracker"
         minSdk 26
         targetSdk 34
         versionCode 3

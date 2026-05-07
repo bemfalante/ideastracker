@@ -1,10 +1,10 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.ideastracker.databinding.ActivityShareBinding
+import com.jules.ideastracker.databinding.ActivityShareBinding
 import kotlinx.coroutines.launch
 
 class ShareActivity : AppCompatActivity() {

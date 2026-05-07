@@ -1,4 +1,4 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import android.content.Context
 import androidx.room.Database

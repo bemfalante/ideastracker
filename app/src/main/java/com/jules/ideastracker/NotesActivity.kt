@@ -1,4 +1,4 @@
-package com.example.ideastracker
+package com.jules.ideastracker
 
 import android.os.Bundle
 import androidx.activity.viewModels
@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.ideastracker.databinding.ActivityNotesBinding
+import com.jules.ideastracker.databinding.ActivityNotesBinding
 import kotlinx.coroutines.launch
 
 class NotesActivity : AppCompatActivity() {
