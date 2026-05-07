@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -45,7 +46,7 @@ class IdeasFragment : Fragment() {
     }
 
     private fun shareAsTextFile(idea: Idea) {
-        val fileName = "${idea.title.replace(" ", "_")}.txt"
+        val fileName = "${idea.title.filter { it.isLetterOrDigit() || it == '_' }.take(20)}.txt"
         val content = """
             Title: ${idea.title}
             Category: ${idea.category ?: "N/A"}
@@ -57,24 +58,30 @@ class IdeasFragment : Fragment() {
         """.trimIndent()
 
         try {
-            val file = File(requireContext().cacheDir, fileName)
-            FileOutputStream(file).use {
+            val file = File(requireContext().cacheDir, "shared_ideas")
+            if (!file.exists()) file.mkdirs()
+            val textFile = File(file, fileName)
+
+            FileOutputStream(textFile).use {
                 it.write(content.toByteArray())
             }
 
+            val authority = "${requireContext().packageName}.provider"
             val uri: Uri = FileProvider.getUriForFile(
                 requireContext(),
-                "${requireContext().packageName}.provider",
-                file
+                authority,
+                textFile
             )
 
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, content) // Also share as text for apps that don't like files
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             startActivity(Intent.createChooser(intent, "Share Idea via"))
         } catch (e: Exception) {
+            Toast.makeText(context, "Error sharing: ${e.message}", Toast.LENGTH_LONG).show()
             e.printStackTrace()
         }
     }
