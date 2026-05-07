@@ -1,19 +1,15 @@
 package com.jules.ideastracker
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jules.ideastracker.databinding.FragmentIdeasBinding
-import java.io.File
-import java.io.FileOutputStream
 
 class IdeasFragment : Fragment() {
 
@@ -34,7 +30,7 @@ class IdeasFragment : Fragment() {
             onMove = { idea, newStatus -> viewModel.updateStatus(idea, newStatus) },
             onDelete = { idea -> viewModel.delete(idea) },
             onClick = { idea -> showEditDialog(idea) },
-            onShare = { idea -> shareAsTextFile(idea) }
+            onShare = { idea -> shareAsText(idea) }
         )
 
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
@@ -45,40 +41,26 @@ class IdeasFragment : Fragment() {
         }
     }
 
-    private fun shareAsTextFile(idea: Idea) {
-        val fileName = "${idea.title.filter { it.isLetterOrDigit() || it == '_' }.take(20)}.txt"
+    private fun shareAsText(idea: Idea) {
         val content = """
-            Title: ${idea.title}
-            Category: ${idea.category ?: "N/A"}
-            Description: ${idea.description}
-            Link: ${idea.link ?: "N/A"}
-            Status: ${idea.status}
-            Definition of Done: ${idea.definitionOfDone ?: "N/A"}
-            Next Steps: ${idea.nextSteps ?: "N/A"}
+            TITLE: ${idea.title}
+            CATEGORY: ${idea.category ?: "Uncategorized"}
+            DESCRIPTION: ${idea.description}
+            LINK: ${idea.link ?: "N/A"}
+            STATUS: ${idea.status}
+            DEFINITION OF DONE: ${idea.definitionOfDone ?: "N/A"}
+            NEXT STEPS: ${idea.nextSteps ?: "N/A"}
+            CREATED AT: ${idea.timestamp}
         """.trimIndent()
 
         try {
-            val file = File(requireContext().cacheDir, "shared_ideas")
-            if (!file.exists()) file.mkdirs()
-            val textFile = File(file, fileName)
-
-            FileOutputStream(textFile).use {
-                it.write(content.toByteArray())
-            }
-
-            val authority = "com.jules.ideastracker.provider"
-            val uri: Uri = FileProvider.getUriForFile(
-                requireContext(),
-                authority,
-                textFile
-            )
-
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, content) // Also share as text for apps that don't like files
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                putExtra(Intent.EXTRA_SUBJECT, "Idea: ${idea.title}")
+                putExtra(Intent.EXTRA_TEXT, content)
             }
+            // Sharing text directly is the most reliable way.
+            // When shared to Google Drive, it will prompt to save as a file.
             startActivity(Intent.createChooser(intent, "Share Idea via"))
         } catch (e: Exception) {
             Toast.makeText(context, "Error sharing: ${e.message}", Toast.LENGTH_LONG).show()
