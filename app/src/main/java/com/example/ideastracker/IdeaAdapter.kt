@@ -13,7 +13,8 @@ import java.util.*
 class IdeaAdapter(
     private val onMove: (Idea, IdeaStatus) -> Unit,
     private val onDelete: (Idea) -> Unit,
-    private val onClick: (Idea) -> Unit
+    private val onClick: (Idea) -> Unit,
+    private val onShare: (Idea) -> Unit
 ) : ListAdapter<Idea, IdeaAdapter.IdeaViewHolder>(IdeaDiffCallback()) {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -77,6 +78,7 @@ class IdeaAdapter(
             }
 
             binding.btnDelete.setOnClickListener { onDelete(idea) }
+            binding.btnShare.setOnClickListener { onShare(idea) }
             binding.itemContainer.setOnClickListener { onClick(idea) }
         }
     }

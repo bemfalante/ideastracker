@@ -58,6 +58,10 @@ class MainActivity : AppCompatActivity() {
             viewModel.toggleSort()
         }
 
+        binding.btnNotes.setOnClickListener {
+            startActivity(android.content.Intent(this, NotesActivity::class.java))
+        }
+
         binding.fabAdd.setOnClickListener {
             showAddIdeaDialog()
         }
