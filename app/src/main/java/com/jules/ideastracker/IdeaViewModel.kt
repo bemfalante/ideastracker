@@ -8,45 +8,58 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
     private val _isAsc = MutableLiveData(0) // 0 for DESC (Newest), 1 for ASC (Oldest)
     val isAsc: LiveData<Int> = _isAsc
 
+    val lastInsertedId = MutableLiveData<Long>()
+
     fun toggleSort() {
         _isAsc.value = if (_isAsc.value == 0) 1 else 0
     }
 
     fun getIdeas(status: IdeaStatus): LiveData<List<Idea>> {
         return _isAsc.switchMap { asc ->
-            dao.getIdeasByStatus(status, asc ?: 0)
+            when (status) {
+                IdeaStatus.FUTURE -> dao.getFutureIdeas(asc ?: 0)
+                IdeaStatus.ONGOING -> dao.getOngoingIdeas(asc ?: 0)
+                IdeaStatus.DONE -> dao.getDoneIdeas(asc ?: 0)
+            }
         }
     }
 
     fun insert(idea: Idea) = viewModelScope.launch {
-        dao.insert(idea)
+        val id = dao.insert(idea)
+        lastInsertedId.value = id
     }
 
     fun update(idea: Idea) = viewModelScope.launch {
-        dao.update(idea)
+        val updatedIdea = if (idea.status == IdeaStatus.ONGOING) {
+            idea.copy(lastSavedTimestamp = System.currentTimeMillis())
+        } else {
+            idea
+        }
+        dao.update(updatedIdea)
     }
 
-    fun updateStatus(idea: Idea, newStatus: IdeaStatus) = viewModelScope.launch {
+    fun updateStatus(idea: Idea, newStatus: IdeaStatus, dod: String? = null, nextSteps: String? = null, conclusion: String? = null) = viewModelScope.launch {
         val updatedIdea = when (newStatus) {
             IdeaStatus.ONGOING -> {
-                // If moving to ONGOING from FUTURE, add "Definition of Done" and "Next Steps"
                 if (idea.status == IdeaStatus.FUTURE) {
                     idea.copy(
                         status = newStatus,
                         startedTimestamp = System.currentTimeMillis(),
-                        definitionOfDone = idea.definitionOfDone ?: "Definition of Done:",
-                        nextSteps = idea.nextSteps ?: "Next Steps:"
+                        definitionOfDone = dod ?: idea.definitionOfDone ?: "",
+                        nextSteps = nextSteps ?: idea.nextSteps ?: ""
                     )
                 } else {
-                    // Reverting from DONE
                     idea.copy(status = newStatus, finishedTimestamp = null)
                 }
             }
             IdeaStatus.DONE -> {
-                idea.copy(status = newStatus, finishedTimestamp = System.currentTimeMillis())
+                idea.copy(
+                    status = newStatus,
+                    finishedTimestamp = System.currentTimeMillis(),
+                    conclusion = conclusion ?: idea.conclusion ?: ""
+                )
             }
             IdeaStatus.FUTURE -> {
-                // Reverting from ONGOING
                 idea.copy(status = newStatus, startedTimestamp = null, finishedTimestamp = null)
             }
         }

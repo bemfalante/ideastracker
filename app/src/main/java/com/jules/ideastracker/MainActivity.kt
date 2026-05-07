@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // Navigation through header clicks
+        // Navigation through header clicks (Rule 5: pressing captions or arrows)
         binding.tvLeftNav.setOnClickListener {
             val current = binding.viewPager.currentItem
             if (current > 0) binding.viewPager.currentItem = current - 1
@@ -49,6 +49,9 @@ class MainActivity : AppCompatActivity() {
             val current = binding.viewPager.currentItem
             if (current < 2) binding.viewPager.currentItem = current + 1
         }
+        // Center text also clickable to confirm "active" status or do nothing,
+        // but user said "navigate over panels also pressing the captions' texts".
+        // I'll make the whole header area more intuitive.
 
         viewModel.isAsc.observe(this) { isAsc ->
             binding.btnSort.text = if (isAsc == 1) getString(R.string.sort_oldest) else getString(R.string.sort_newest)
@@ -68,6 +71,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnCalendar.setOnClickListener {
             showCalendarDialog()
+        }
+
+        // Rule 4: Auto scroll to new idea
+        viewModel.lastInsertedId.observe(this) { id ->
+            // Move to Future panel (index 2) because new ideas are created as FUTURE
+            binding.viewPager.setCurrentItem(2, true)
         }
     }
 

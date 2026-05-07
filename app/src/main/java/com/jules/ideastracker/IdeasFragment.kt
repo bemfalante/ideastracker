@@ -27,7 +27,14 @@ class IdeasFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val status = arguments?.getSerializable("status") as IdeaStatus
         val adapter = IdeaAdapter(
-            onMove = { idea, newStatus -> viewModel.updateStatus(idea, newStatus) },
+            onMove = { idea, newStatus ->
+                if (newStatus == IdeaStatus.ONGOING || newStatus == IdeaStatus.DONE) {
+                    // Rule 5 & 8: Prompt user when starting or finishing
+                    showEditDialog(idea, true, newStatus)
+                } else {
+                    viewModel.updateStatus(idea, newStatus)
+                }
+            },
             onDelete = { idea -> viewModel.delete(idea) },
             onClick = { idea -> showEditDialog(idea) },
             onShare = { idea -> shareAsText(idea) }
@@ -50,6 +57,7 @@ class IdeasFragment : Fragment() {
             STATUS: ${idea.status}
             DEFINITION OF DONE: ${idea.definitionOfDone ?: "N/A"}
             NEXT STEPS: ${idea.nextSteps ?: "N/A"}
+            CONCLUSION: ${idea.conclusion ?: "N/A"}
             CREATED AT: ${idea.timestamp}
         """.trimIndent()
 
@@ -59,8 +67,6 @@ class IdeasFragment : Fragment() {
                 putExtra(Intent.EXTRA_SUBJECT, "Idea: ${idea.title}")
                 putExtra(Intent.EXTRA_TEXT, content)
             }
-            // Sharing text directly is the most reliable way.
-            // When shared to Google Drive, it will prompt to save as a file.
             startActivity(Intent.createChooser(intent, "Share Idea via"))
         } catch (e: Exception) {
             Toast.makeText(context, "Error sharing: ${e.message}", Toast.LENGTH_LONG).show()
@@ -68,8 +74,8 @@ class IdeasFragment : Fragment() {
         }
     }
 
-    private fun showEditDialog(idea: Idea) {
-        val dialog = AddIdeaDialog.newInstance(idea)
+    private fun showEditDialog(idea: Idea, promptForMove: Boolean = false, targetStatus: IdeaStatus? = null) {
+        val dialog = AddIdeaDialog.newInstance(idea, promptForMove, targetStatus)
         dialog.show(parentFragmentManager, "EditIdeaDialog")
     }
 

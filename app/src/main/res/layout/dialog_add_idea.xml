@@ -52,26 +52,49 @@
                 android:gravity="top" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- Special Fields Section -->
+        <LinearLayout
+            android:id="@+id/specialFieldsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="Definition of Done">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDoD"
+            android:orientation="vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minLines="2"
-                android:gravity="top" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="8dp"
+                android:hint="Definition of Done">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDoD"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minLines="2"
+                    android:gravity="top" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="Next Steps">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etNextSteps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minLines="2"
+                    android:gravity="top" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilConclusion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Next Steps">
+            android:hint="Conclusion"
+            android:visibility="gone">
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etNextSteps"
+                android:id="@+id/etConclusion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minLines="2"
@@ -86,7 +109,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etLink"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:inputType="textUri" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout

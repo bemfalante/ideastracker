@@ -58,8 +58,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:textStyle="italic"
-            android:textColor="@color/black"
-            android:visibility="gone" />
+            android:textColor="@color/black" />
 
         <TextView
             android:id="@+id/tvNextSteps"
@@ -67,6 +66,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textStyle="italic"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/tvConclusion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textStyle="bold"
             android:textColor="@color/black"
             android:visibility="gone" />
 
@@ -75,7 +82,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textSize="12sp"
+            android:textSize="10sp"
             android:textColor="@color/gray" />
 
         <LinearLayout

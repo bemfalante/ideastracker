@@ -36,22 +36,31 @@ class IdeaAdapter(
             binding.tvLink.text = idea.link
             binding.tvLink.visibility = if (idea.link.isNullOrEmpty()) View.GONE else View.VISIBLE
 
-            // DoD and Next Steps: don't show if status is DONE
+            // Rule 7: Show labels before content
+            // Rule 8: In DONE panel, hide Next Steps, show Conclusion
             if (idea.status == IdeaStatus.DONE) {
-                binding.tvDoD.visibility = View.GONE
-                binding.tvNextSteps.visibility = View.GONE
-            } else {
-                binding.tvDoD.text = idea.definitionOfDone
                 binding.tvDoD.visibility = if (idea.definitionOfDone.isNullOrEmpty()) View.GONE else View.VISIBLE
+                binding.tvDoD.text = "Definition of Done: ${idea.definitionOfDone}"
 
-                binding.tvNextSteps.text = idea.nextSteps
+                binding.tvNextSteps.visibility = View.GONE
+
+                binding.tvConclusion.visibility = if (idea.conclusion.isNullOrEmpty()) View.GONE else View.VISIBLE
+                binding.tvConclusion.text = "Conclusion: ${idea.conclusion}"
+            } else {
+                binding.tvDoD.visibility = if (idea.definitionOfDone.isNullOrEmpty()) View.GONE else View.VISIBLE
+                binding.tvDoD.text = "Definition of Done: ${idea.definitionOfDone}"
+
                 binding.tvNextSteps.visibility = if (idea.nextSteps.isNullOrEmpty()) View.GONE else View.VISIBLE
+                binding.tvNextSteps.text = "Next Steps: ${idea.nextSteps}"
+
+                binding.tvConclusion.visibility = View.GONE
             }
 
             val dateText = StringBuilder()
             dateText.append("Created: ${dateFormat.format(Date(idea.timestamp))}")
             idea.startedTimestamp?.let { dateText.append("\nStarted: ${dateFormat.format(Date(it))}") }
             idea.finishedTimestamp?.let { dateText.append("\nFinished: ${dateFormat.format(Date(it))}") }
+            idea.lastSavedTimestamp?.let { dateText.append("\nLast Saved: ${dateFormat.format(Date(it))}") }
             binding.tvDates.text = dateText.toString()
 
             when (idea.status) {
@@ -79,7 +88,13 @@ class IdeaAdapter(
 
             binding.btnDelete.setOnClickListener { onDelete(idea) }
             binding.btnShare.setOnClickListener { onShare(idea) }
+
+            // Rule 2: Single, double or long press opens for editing
             binding.itemContainer.setOnClickListener { onClick(idea) }
+            binding.itemContainer.setOnLongClickListener {
+                onClick(idea)
+                true
+            }
         }
     }
 
