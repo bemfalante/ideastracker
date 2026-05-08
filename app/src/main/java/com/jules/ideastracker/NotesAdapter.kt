@@ -7,7 +7,10 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.jules.ideastracker.databinding.ItemNoteBinding
 
-class NotesAdapter(private val onDelete: (Note) -> Unit) : ListAdapter<Note, NotesAdapter.NoteViewHolder>(NoteDiffCallback()) {
+class NotesAdapter(
+    private val onDelete: (Note) -> Unit,
+    private val onLongClick: (Note) -> Unit
+) : ListAdapter<Note, NotesAdapter.NoteViewHolder>(NoteDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
         val binding = ItemNoteBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -22,6 +25,12 @@ class NotesAdapter(private val onDelete: (Note) -> Unit) : ListAdapter<Note, Not
         fun bind(note: Note) {
             binding.tvNoteContent.text = note.content
             binding.btnDeleteNote.setOnClickListener { onDelete(note) }
+
+            // Rule 3: Edit on long press
+            binding.root.setOnLongClickListener {
+                onLongClick(note)
+                true
+            }
         }
     }
 

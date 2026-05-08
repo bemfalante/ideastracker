@@ -1,8 +1,13 @@
 package com.jules.ideastracker
 
 import android.os.Bundle
-import androidx.activity.viewModels
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -22,7 +27,10 @@ class NotesActivity : AppCompatActivity() {
         binding = ActivityNotesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val adapter = NotesAdapter { note -> viewModel.delete(note) }
+        val adapter = NotesAdapter(
+            onDelete = { note -> viewModel.delete(note) },
+            onLongClick = { note -> showEditNoteDialog(note) }
+        )
         binding.rvNotes.layoutManager = LinearLayoutManager(this)
         binding.rvNotes.adapter = adapter
 
@@ -38,12 +46,30 @@ class NotesActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun showEditNoteDialog(note: Note) {
+        val editText = EditText(this)
+        editText.setText(note.content)
+
+        AlertDialog.Builder(this)
+            .setTitle("Edit Note")
+            .setView(editText)
+            .setPositiveButton("Save") { _, _ ->
+                val newContent = editText.text.toString()
+                if (newContent.isNotBlank()) {
+                    viewModel.update(note.copy(content = newContent))
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 }
 
 class NotesViewModel(private val dao: NoteDao) : ViewModel() {
     val allNotes = dao.getAllNotes()
 
     fun insert(note: Note) = viewModelScope.launch { dao.insert(note) }
+    fun update(note: Note) = viewModelScope.launch { dao.update(note) }
     fun delete(note: Note) = viewModelScope.launch { dao.delete(note) }
 }
 

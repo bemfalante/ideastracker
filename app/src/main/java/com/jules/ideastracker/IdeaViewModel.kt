@@ -8,7 +8,8 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
     private val _isAsc = MutableLiveData(0) // 0 for DESC (Newest), 1 for ASC (Oldest)
     val isAsc: LiveData<Int> = _isAsc
 
-    val lastInsertedId = MutableLiveData<Long>()
+    private val _lastInsertedId = MutableLiveData<Long?>()
+    val lastInsertedId: LiveData<Long?> = _lastInsertedId
 
     fun toggleSort() {
         _isAsc.value = if (_isAsc.value == 0) 1 else 0
@@ -26,7 +27,11 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
 
     fun insert(idea: Idea) = viewModelScope.launch {
         val id = dao.insert(idea)
-        lastInsertedId.value = id
+        _lastInsertedId.value = id
+    }
+
+    fun clearLastInsertedId() {
+        _lastInsertedId.value = null
     }
 
     fun update(idea: Idea) = viewModelScope.launch {

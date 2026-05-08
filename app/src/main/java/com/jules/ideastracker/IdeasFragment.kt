@@ -29,7 +29,6 @@ class IdeasFragment : Fragment() {
         val adapter = IdeaAdapter(
             onMove = { idea, newStatus ->
                 if (newStatus == IdeaStatus.ONGOING || newStatus == IdeaStatus.DONE) {
-                    // Rule 5 & 8: Prompt user when starting or finishing
                     showEditDialog(idea, true, newStatus)
                 } else {
                     viewModel.updateStatus(idea, newStatus)
@@ -45,6 +44,19 @@ class IdeasFragment : Fragment() {
 
         viewModel.getIdeas(status).observe(viewLifecycleOwner) { ideas ->
             adapter.submitList(ideas)
+
+            // Rule 5: Auto scroll to new idea
+            // We check if we just inserted something and we are in the FUTURE panel
+            if (status == IdeaStatus.FUTURE && ideas.isNotEmpty()) {
+                val lastId = viewModel.lastInsertedId.value
+                if (lastId != null) {
+                    val index = ideas.indexOfFirst { it.id.toLong() == lastId }
+                    if (index != -1) {
+                        binding.recyclerView.smoothScrollToPosition(index)
+                        viewModel.clearLastInsertedId()
+                    }
+                }
+            }
         }
     }
 
@@ -75,6 +87,9 @@ class IdeasFragment : Fragment() {
     }
 
     private fun showEditDialog(idea: Idea, promptForMove: Boolean = false, targetStatus: IdeaStatus? = null) {
+        // Rule 1: Prevent opening multiple dialogs (fix double click issue)
+        if (parentFragmentManager.findFragmentByTag("EditIdeaDialog") != null) return
+
         val dialog = AddIdeaDialog.newInstance(idea, promptForMove, targetStatus)
         dialog.show(parentFragmentManager, "EditIdeaDialog")
     }
