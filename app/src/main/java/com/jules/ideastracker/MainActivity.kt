@@ -65,6 +65,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(android.content.Intent(this, NotesActivity::class.java))
         }
 
+        binding.btnBills.setOnClickListener {
+            startActivity(android.content.Intent(this, BillsActivity::class.java))
+        }
+
         binding.fabAdd.setOnClickListener {
             showAddIdeaDialog()
         }

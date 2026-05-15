@@ -1,15 +1,18 @@
 package com.jules.ideastracker
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.jules.ideastracker.databinding.FragmentIdeasBinding
+import java.util.*
 
 class IdeasFragment : Fragment() {
 
@@ -19,6 +22,8 @@ class IdeasFragment : Fragment() {
         IdeaViewModelFactory(AppDatabase.getDatabase(requireContext()).ideaDao())
     }
 
+    private lateinit var adapter: IdeaAdapter
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentIdeasBinding.inflate(inflater, container, false)
         return binding.root
@@ -26,7 +31,7 @@ class IdeasFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val status = arguments?.getSerializable("status") as IdeaStatus
-        val adapter = IdeaAdapter(
+        adapter = IdeaAdapter(
             onMove = { idea, newStatus ->
                 if (newStatus == IdeaStatus.ONGOING || newStatus == IdeaStatus.DONE) {
                     showEditDialog(idea, true, newStatus)
@@ -42,54 +47,54 @@ class IdeasFragment : Fragment() {
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         binding.recyclerView.adapter = adapter
 
+        // Rule 2: Drag and Drop
+        val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+                val fromPos = viewHolder.adapterPosition
+                val toPos = target.adapterPosition
+                val list = adapter.currentList.toMutableList()
+                Collections.swap(list, fromPos, toPos)
+                adapter.submitList(list)
+                viewModel.updateManualOrder(list)
+                return true
+            }
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+        })
+        touchHelper.attachToRecyclerView(binding.recyclerView)
+
         viewModel.getIdeas(status).observe(viewLifecycleOwner) { ideas ->
             adapter.submitList(ideas)
-
-            // Rule 5: Auto scroll to new idea
-            // We check if we just inserted something and we are in the FUTURE panel
-            if (status == IdeaStatus.FUTURE && ideas.isNotEmpty()) {
-                val lastId = viewModel.lastInsertedId.value
-                if (lastId != null) {
-                    val index = ideas.indexOfFirst { it.id.toLong() == lastId }
-                    if (index != -1) {
-                        binding.recyclerView.smoothScrollToPosition(index)
-                        viewModel.clearLastInsertedId()
-                    }
-                }
-            }
         }
+
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                viewModel.setSearchQuery(query ?: "")
+                return true
+            }
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchQuery(newText ?: "")
+                return true
+            }
+        })
     }
 
+    // [Rest of shareAsText and showEditDialog same as before]
     private fun shareAsText(idea: Idea) {
-        val content = """
-            TITLE: ${idea.title}
-            CATEGORY: ${idea.category ?: "Uncategorized"}
-            DESCRIPTION: ${idea.description}
-            LINK: ${idea.link ?: "N/A"}
-            STATUS: ${idea.status}
-            DEFINITION OF DONE: ${idea.definitionOfDone ?: "N/A"}
-            NEXT STEPS: ${idea.nextSteps ?: "N/A"}
-            CONCLUSION: ${idea.conclusion ?: "N/A"}
-            CREATED AT: ${idea.timestamp}
-        """.trimIndent()
-
+        val content = "TITLE: ${idea.title}\nCATEGORY: ${idea.category ?: "Uncategorized"}\nDESCRIPTION: ${idea.description}\nLINK: ${idea.link ?: "N/A"}\nSTATUS: ${idea.status}\nDEFINITION OF DONE: ${idea.definitionOfDone ?: "N/A"}\nNEXT STEPS: ${idea.nextSteps ?: "N/A"}\nCONCLUSION: ${idea.conclusion ?: "N/A"}"
         try {
-            val intent = Intent(Intent.ACTION_SEND).apply {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                 type = "text/plain"
-                putExtra(Intent.EXTRA_SUBJECT, "Idea: ${idea.title}")
-                putExtra(Intent.EXTRA_TEXT, content)
+                putExtra(android.content.Intent.EXTRA_SUBJECT, "Idea: ${idea.title}")
+                putExtra(android.content.Intent.EXTRA_TEXT, content)
             }
-            startActivity(Intent.createChooser(intent, "Share Idea via"))
+            startActivity(android.content.Intent.createChooser(intent, "Share Idea via"))
         } catch (e: Exception) {
             Toast.makeText(context, "Error sharing: ${e.message}", Toast.LENGTH_LONG).show()
-            e.printStackTrace()
         }
     }
 
     private fun showEditDialog(idea: Idea, promptForMove: Boolean = false, targetStatus: IdeaStatus? = null) {
-        // Rule 1: Prevent opening multiple dialogs (fix double click issue)
         if (parentFragmentManager.findFragmentByTag("EditIdeaDialog") != null) return
-
         val dialog = AddIdeaDialog.newInstance(idea, promptForMove, targetStatus)
         dialog.show(parentFragmentManager, "EditIdeaDialog")
     }

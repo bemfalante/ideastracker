@@ -8,11 +8,13 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Idea::class, Note::class], version = 4, exportSchema = false)
+@Database(entities = [Idea::class, Note::class, Bill::class, TimerHistory::class], version = 5, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun ideaDao(): IdeaDao
     abstract fun noteDao(): NoteDao
+    abstract fun billDao(): BillDao
+    abstract fun timerDao(): TimerDao
 
     companion object {
         @Volatile
@@ -31,6 +33,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE ideas ADD COLUMN manualOrder INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `bills` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `dueDate` INTEGER NOT NULL, `isPaid` INTEGER NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `timer_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `durationMillis` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL)")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -38,7 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "idea_database"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
                 INSTANCE = instance
                 instance

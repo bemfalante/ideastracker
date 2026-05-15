@@ -8,6 +8,9 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
     private val _isAsc = MutableLiveData(0) // 0 for DESC (Newest), 1 for ASC (Oldest)
     val isAsc: LiveData<Int> = _isAsc
 
+    private val _searchQuery = MutableLiveData("")
+    val searchQuery: LiveData<String> = _searchQuery
+
     private val _lastInsertedId = MutableLiveData<Long?>()
     val lastInsertedId: LiveData<Long?> = _lastInsertedId
 
@@ -15,14 +18,39 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
         _isAsc.value = if (_isAsc.value == 0) 1 else 0
     }
 
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
     fun getIdeas(status: IdeaStatus): LiveData<List<Idea>> {
-        return _isAsc.switchMap { asc ->
-            when (status) {
-                IdeaStatus.FUTURE -> dao.getFutureIdeas(asc ?: 0)
-                IdeaStatus.ONGOING -> dao.getOngoingIdeas(asc ?: 0)
-                IdeaStatus.DONE -> dao.getDoneIdeas(asc ?: 0)
+        val result = MediatorLiveData<List<Idea>>()
+
+        fun update() {
+            val asc = _isAsc.value ?: 0
+            val query = _searchQuery.value ?: ""
+
+            val source = if (query.isEmpty()) {
+                when (status) {
+                    IdeaStatus.FUTURE -> dao.getFutureIdeas(asc)
+                    IdeaStatus.ONGOING -> dao.getOngoingIdeas(asc)
+                    IdeaStatus.DONE -> dao.getDoneIdeas(asc)
+                }
+            } else {
+                when (status) {
+                    IdeaStatus.FUTURE -> dao.searchFutureIdeas(query, asc)
+                    IdeaStatus.ONGOING -> dao.searchOngoingIdeas(query, asc)
+                    IdeaStatus.DONE -> dao.searchDoneIdeas(query, asc)
+                }
             }
+
+            result.removeSource(source) // Clean up old source if any
+            result.addSource(source) { result.value = it }
         }
+
+        result.addSource(_isAsc) { update() }
+        result.addSource(_searchQuery) { update() }
+
+        return result
     }
 
     fun insert(idea: Idea) = viewModelScope.launch {
@@ -41,6 +69,12 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
             idea
         }
         dao.update(updatedIdea)
+    }
+
+    fun updateManualOrder(ideas: List<Idea>) = viewModelScope.launch {
+        ideas.forEachIndexed { index, idea ->
+            dao.update(idea.copy(manualOrder = index))
+        }
     }
 
     fun updateStatus(idea: Idea, newStatus: IdeaStatus, dod: String? = null, nextSteps: String? = null, conclusion: String? = null) = viewModelScope.launch {
