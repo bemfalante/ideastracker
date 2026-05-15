@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.viewModels
@@ -30,7 +31,12 @@ class BillsActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val adapter = BillsAdapter(
-            onCheckChanged = { bill, isChecked -> viewModel.update(bill.copy(isPaid = isChecked)) },
+            onCheckChanged = { bill, isChecked ->
+                viewModel.update(bill.copy(isPaid = isChecked))
+                if (isChecked) {
+                    promptNextMonth(bill)
+                }
+            },
             onLongClick = { bill -> showBillCrudDialog(bill) }
         )
         binding.rvBills.layoutManager = LinearLayoutManager(this)
@@ -45,14 +51,28 @@ class BillsActivity : AppCompatActivity() {
         }
     }
 
+    private fun promptNextMonth(bill: Bill) {
+        AlertDialog.Builder(this)
+            .setTitle("Bill Paid")
+            .setMessage("Do you want to automatically schedule this bill for next month?")
+            .setPositiveButton("Yes") { _, _ ->
+                val calendar = Calendar.getInstance()
+                calendar.timeInMillis = bill.dueDate
+                calendar.add(Calendar.MONTH, 1)
+                viewModel.insert(Bill(title = bill.title, dueDate = calendar.timeInMillis))
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
     private fun showBillCrudDialog(bill: Bill? = null) {
         val view = layoutInflater.inflate(R.layout.dialog_bill_crud, null)
         val etTitle = view.findViewById<EditText>(R.id.etBillTitle)
-        val etDate = view.findViewById<EditText>(R.id.etBillDate) // Format simple DD/MM/YYYY
+        val etDate = view.findViewById<EditText>(R.id.etBillDate)
 
         bill?.let {
             etTitle.setText(it.title)
-            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val sdf = SimpleDateFormat("dd/MM", Locale.getDefault())
             etDate.setText(sdf.format(Date(it.dueDate)))
         }
 
@@ -63,14 +83,22 @@ class BillsActivity : AppCompatActivity() {
                 val title = etTitle.text.toString()
                 val dateStr = etDate.text.toString()
                 try {
-                    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    val date = sdf.parse(dateStr)?.time ?: System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM", Locale.getDefault())
+                    sdf.isLenient = false
+                    val date = sdf.parse(dateStr)
+                    val calendar = Calendar.getInstance()
+                    val year = calendar.get(Calendar.YEAR)
+                    calendar.time = date
+                    calendar.set(Calendar.YEAR, year)
+
                     if (bill == null) {
-                        viewModel.insert(Bill(title = title, dueDate = date))
+                        viewModel.insert(Bill(title = title, dueDate = calendar.timeInMillis))
                     } else {
-                        viewModel.update(bill.copy(title = title, dueDate = date))
+                        viewModel.update(bill.copy(title = title, dueDate = calendar.timeInMillis))
                     }
-                } catch (e: Exception) { /* ignore */ }
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Invalid date format. Use DD/MM", Toast.LENGTH_SHORT).show()
+                }
             }
 
         if (bill != null) {

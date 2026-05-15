@@ -21,6 +21,7 @@ class TimerService : Service() {
     private var isRunning = false
     private val handler = Handler(Looper.getMainLooper())
     private var date: String? = null
+    private var taskName: String? = null
 
     private val updateRunnable = object : Runnable {
         override fun run() {
@@ -37,6 +38,7 @@ class TimerService : Service() {
             stopTimer()
         } else {
             date = intent?.getStringExtra("date")
+            taskName = intent?.getStringExtra("taskName")
             startTimer()
         }
         return START_STICKY
@@ -57,10 +59,10 @@ class TimerService : Service() {
         handler.removeCallbacks(updateRunnable)
         val duration = System.currentTimeMillis() - startTime
 
-        date?.let {
+        date?.let { d ->
             CoroutineScope(Dispatchers.IO).launch {
                 AppDatabase.getDatabase(applicationContext).timerDao().insert(
-                    TimerHistory(date = it, durationMillis = duration)
+                    TimerHistory(date = d, durationMillis = duration, taskName = taskName)
                 )
             }
         }
@@ -77,10 +79,12 @@ class TimerService : Service() {
         val minutes = (elapsed % 3600000) / 60000
         val seconds = (elapsed % 60000) / 1000
         val timeString = String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        val content = "Task: ${taskName ?: "Unnamed"}\nElapsed Time: $timeString"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Cronômetro Running")
-            .setContentText("Elapsed Time: $timeString")
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setContentText(content)
             .setSmallIcon(android.R.drawable.ic_menu_recent_history)
             .setContentIntent(stopPendingIntent)
             .setOngoing(true)

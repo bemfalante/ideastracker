@@ -31,6 +31,7 @@ data class TimerHistory(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val date: String, // format YYYY-MM-DD
     val durationMillis: Long,
+    val taskName: String? = null, // New field
     val timestamp: Long = System.currentTimeMillis()
 ) : Serializable
 
