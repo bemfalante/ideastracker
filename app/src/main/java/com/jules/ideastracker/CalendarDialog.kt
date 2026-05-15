@@ -52,10 +52,6 @@ class CalendarDialog : DialogFragment() {
     private fun promptForTaskName(date: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val db = AppDatabase.getDatabase(requireContext())
-            // Correct way to get ongoing ideas for the spinner
-            // We use a raw query or just a simple sync fetch if available.
-            // Since I don't have a sync fetch for ongoing, I'll use the DAO.
-            // Note: I'll need a simple sync query in IdeaDao.
             val ongoingIdeas = db.ideaDao().getOngoingIdeasSync()
             val titles = ongoingIdeas.map { it.title }.toMutableList()
             titles.add(0, "Create New Task Name...")
@@ -70,14 +66,8 @@ class CalendarDialog : DialogFragment() {
                     .setPositiveButton("Start") { _, _ ->
                         val selected = spinner.selectedItem.toString()
                         if (selected == "Create New Task Name...") {
-                            val editText = EditText(requireContext())
-                            AlertDialog.Builder(requireContext())
-                                .setTitle("New Task Name")
-                                .setView(editText)
-                                .setPositiveButton("Start") { _, _ ->
-                                    startTimer(date, editText.text.toString())
-                                }
-                                .show()
+                            // Rule 4: prompt for name immediately
+                            promptNewTaskName(date)
                         } else {
                             startTimer(date, selected)
                         }
@@ -86,6 +76,23 @@ class CalendarDialog : DialogFragment() {
                     .show()
             }
         }
+    }
+
+    private fun promptNewTaskName(date: String) {
+        val editText = EditText(requireContext())
+        AlertDialog.Builder(requireContext())
+            .setTitle("New Task Name")
+            .setView(editText)
+            .setPositiveButton("Start") { _, _ ->
+                val name = editText.text.toString()
+                if (name.isNotBlank()) {
+                    startTimer(date, name)
+                } else {
+                    Toast.makeText(context, "Name cannot be empty", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun startTimer(date: String, taskName: String) {
@@ -112,11 +119,13 @@ class CalendarDialog : DialogFragment() {
                     val sb = StringBuilder()
                     val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
                     history.forEach {
-                        val h = it.durationMillis / 3600000
-                        val m = (it.durationMillis % 3600000) / 60000
-                        val s = (it.durationMillis % 60000) / 1000
+                        // Rule 5: Show minutes and seconds only
+                        val totalSeconds = it.durationMillis / 1000
+                        val minutes = totalSeconds / 60
+                        val seconds = totalSeconds % 60
+                        val timeString = String.format("%02d:%02d", minutes, seconds)
                         val task = if (it.taskName != null) " [${it.taskName}]" else ""
-                        sb.append("${sdf.format(Date(it.timestamp))}: ${String.format("%02d:%02d:%02d", h, m, s)}$task\n")
+                        sb.append("${sdf.format(Date(it.timestamp))}: $timeString$task\n")
                     }
                     AlertDialog.Builder(requireContext())
                         .setTitle("History for $date")

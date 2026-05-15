@@ -14,7 +14,8 @@ class IdeaAdapter(
     private val onMove: (Idea, IdeaStatus) -> Unit,
     private val onDelete: (Idea) -> Unit,
     private val onClick: (Idea) -> Unit,
-    private val onShare: (Idea) -> Unit
+    private val onShare: (Idea) -> Unit,
+    private val onMoveToTop: (Idea) -> Unit
 ) : ListAdapter<Idea, IdeaAdapter.IdeaViewHolder>(IdeaDiffCallback()) {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -55,7 +56,6 @@ class IdeaAdapter(
             idea.startedTimestamp?.let { dateText.append("\nStarted: ${dateFormat.format(Date(it))}") }
             idea.finishedTimestamp?.let { dateText.append("\nFinished: ${dateFormat.format(Date(it))}") }
 
-            // Rule 2: Only show "Last Saved" while in Ongoing panel
             if (idea.status == IdeaStatus.ONGOING) {
                 idea.lastSavedTimestamp?.let { dateText.append("\nLast Saved: ${dateFormat.format(Date(it))}") }
             }
@@ -87,6 +87,9 @@ class IdeaAdapter(
 
             binding.btnDelete.setOnClickListener { onDelete(idea) }
             binding.btnShare.setOnClickListener { onShare(idea) }
+
+            // Rule 1: Go-to-the-top button
+            binding.btnToTop.setOnClickListener { onMoveToTop(idea) }
 
             binding.itemContainer.setOnClickListener { onClick(idea) }
             binding.itemContainer.setOnLongClickListener {

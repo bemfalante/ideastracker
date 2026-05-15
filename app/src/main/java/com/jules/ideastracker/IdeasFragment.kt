@@ -8,9 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.jules.ideastracker.databinding.FragmentIdeasBinding
 import java.util.*
 
@@ -41,26 +39,12 @@ class IdeasFragment : Fragment() {
             },
             onDelete = { idea -> viewModel.delete(idea) },
             onClick = { idea -> showEditDialog(idea) },
-            onShare = { idea -> shareAsText(idea) }
+            onShare = { idea -> shareAsText(idea) },
+            onMoveToTop = { idea -> viewModel.moveToTop(idea) }
         )
 
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
         binding.recyclerView.adapter = adapter
-
-        // Rule 2: Drag and Drop
-        val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
-            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-                val fromPos = viewHolder.adapterPosition
-                val toPos = target.adapterPosition
-                val list = adapter.currentList.toMutableList()
-                Collections.swap(list, fromPos, toPos)
-                adapter.submitList(list)
-                viewModel.updateManualOrder(list)
-                return true
-            }
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
-        })
-        touchHelper.attachToRecyclerView(binding.recyclerView)
 
         viewModel.getIdeas(status).observe(viewLifecycleOwner) { ideas ->
             adapter.submitList(ideas)
@@ -78,7 +62,6 @@ class IdeasFragment : Fragment() {
         })
     }
 
-    // [Rest of shareAsText and showEditDialog same as before]
     private fun shareAsText(idea: Idea) {
         val content = "TITLE: ${idea.title}\nCATEGORY: ${idea.category ?: "Uncategorized"}\nDESCRIPTION: ${idea.description}\nLINK: ${idea.link ?: "N/A"}\nSTATUS: ${idea.status}\nDEFINITION OF DONE: ${idea.definitionOfDone ?: "N/A"}\nNEXT STEPS: ${idea.nextSteps ?: "N/A"}\nCONCLUSION: ${idea.conclusion ?: "N/A"}"
         try {

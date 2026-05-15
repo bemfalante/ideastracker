@@ -75,11 +75,12 @@ class TimerService : Service() {
         val stopIntent = Intent(this, TimerService::class.java).apply { action = "STOP" }
         val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val hours = (elapsed / 3600000)
-        val minutes = (elapsed % 3600000) / 60000
-        val seconds = (elapsed % 60000) / 1000
-        val timeString = String.format("%02d:%02d:%02d", hours, minutes, seconds)
-        val content = "Task: ${taskName ?: "Unnamed"}\nElapsed Time: $timeString"
+        // Rule 5: Show minutes and seconds only
+        val totalSeconds = elapsed / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        val timeString = String.format("%02d:%02d", minutes, seconds)
+        val content = "Task: ${taskName ?: "Unnamed"}\nTime: $timeString"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Cronômetro Running")

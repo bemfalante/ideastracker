@@ -43,7 +43,7 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
                 }
             }
 
-            result.removeSource(source) // Clean up old source if any
+            result.removeSource(source)
             result.addSource(source) { result.value = it }
         }
 
@@ -71,10 +71,10 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
         dao.update(updatedIdea)
     }
 
-    fun updateManualOrder(ideas: List<Idea>) = viewModelScope.launch {
-        ideas.forEachIndexed { index, idea ->
-            dao.update(idea.copy(manualOrder = index))
-        }
+    fun moveToTop(idea: Idea) = viewModelScope.launch {
+        // We set manualOrder to be 1 less than the current minimum
+        val minOrder = dao.getMinManualOrder() ?: 0
+        dao.update(idea.copy(manualOrder = minOrder - 1))
     }
 
     fun updateStatus(idea: Idea, newStatus: IdeaStatus, dod: String? = null, nextSteps: String? = null, conclusion: String? = null) = viewModelScope.launch {

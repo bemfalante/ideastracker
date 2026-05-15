@@ -14,6 +14,9 @@ interface IdeaDao {
     @Query("SELECT * FROM ideas WHERE status = 'DONE' ORDER BY manualOrder ASC, CASE WHEN :isAsc = 1 THEN finishedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN finishedTimestamp END DESC")
     fun getDoneIdeas(isAsc: Int): LiveData<List<Idea>>
 
+    @Query("SELECT MIN(manualOrder) FROM ideas")
+    suspend fun getMinManualOrder(): Int?
+
     @Query("SELECT * FROM ideas WHERE status = 'ONGOING'")
     suspend fun getOngoingIdeasSync(): List<Idea>
 
