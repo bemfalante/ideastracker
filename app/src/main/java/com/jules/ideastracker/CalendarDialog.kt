@@ -14,6 +14,7 @@ import java.util.*
 import android.content.Intent
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Spinner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,45 +55,45 @@ class CalendarDialog : DialogFragment() {
             val db = AppDatabase.getDatabase(requireContext())
             val ongoingIdeas = db.ideaDao().getOngoingIdeasSync()
             val titles = ongoingIdeas.map { it.title }.toMutableList()
-            titles.add(0, "Create New Task Name...")
 
             withContext(Dispatchers.Main) {
+                val layout = LinearLayout(requireContext())
+                layout.orientation = LinearLayout.VERTICAL
+                layout.setPadding(50, 20, 50, 20)
+
+                val textView = TextView(requireContext())
+                textView.text = "Select from ongoing ideas:"
+                layout.addView(textView)
+
                 val spinner = Spinner(requireContext())
                 spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, titles)
+                layout.addView(spinner)
+
+                val textViewOr = TextView(requireContext())
+                textViewOr.text = "\nOR enter a new task name:"
+                layout.addView(textViewOr)
+
+                val editText = EditText(requireContext())
+                editText.hint = "New task name"
+                layout.addView(editText)
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Select Task for $date")
-                    .setView(spinner)
+                    .setView(layout)
                     .setPositiveButton("Start") { _, _ ->
-                        val selected = spinner.selectedItem.toString()
-                        if (selected == "Create New Task Name...") {
-                            // Rule 4: prompt for name immediately
-                            promptNewTaskName(date)
+                        val newName = editText.text.toString()
+                        if (newName.isNotBlank()) {
+                            startTimer(date, newName)
+                        } else if (titles.isNotEmpty()) {
+                            startTimer(date, spinner.selectedItem.toString())
                         } else {
-                            startTimer(date, selected)
+                            Toast.makeText(context, "Please provide a task name", Toast.LENGTH_SHORT).show()
                         }
                     }
                     .setNegativeButton("Cancel", null)
                     .show()
             }
         }
-    }
-
-    private fun promptNewTaskName(date: String) {
-        val editText = EditText(requireContext())
-        AlertDialog.Builder(requireContext())
-            .setTitle("New Task Name")
-            .setView(editText)
-            .setPositiveButton("Start") { _, _ ->
-                val name = editText.text.toString()
-                if (name.isNotBlank()) {
-                    startTimer(date, name)
-                } else {
-                    Toast.makeText(context, "Name cannot be empty", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     private fun startTimer(date: String, taskName: String) {
@@ -117,19 +118,26 @@ class CalendarDialog : DialogFragment() {
                     Toast.makeText(context, "No history for $date", Toast.LENGTH_SHORT).show()
                 } else {
                     val sb = StringBuilder()
+                    var totalMillis = 0L
                     val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+
                     history.forEach {
-                        // Rule 5: Show minutes and seconds only
+                        totalMillis += it.durationMillis
                         val totalSeconds = it.durationMillis / 1000
                         val minutes = totalSeconds / 60
                         val seconds = totalSeconds % 60
-                        val timeString = String.format("%02d:%02d", minutes, seconds)
                         val task = if (it.taskName != null) " [${it.taskName}]" else ""
-                        sb.append("${sdf.format(Date(it.timestamp))}: $timeString$task\n")
+                        sb.append("${sdf.format(Date(it.timestamp))}: ${String.format("%02d:%02d", minutes, seconds)}$task\n")
                     }
+
+                    val totalSeconds = totalMillis / 1000
+                    val totalMinutes = totalSeconds / 60
+                    val remainingSeconds = totalSeconds % 60
+                    val totalString = "TOTAL TIME: ${String.format("%02d:%02d", totalMinutes, remainingSeconds)}\n\n"
+
                     AlertDialog.Builder(requireContext())
                         .setTitle("History for $date")
-                        .setMessage(sb.toString())
+                        .setMessage(totalString + sb.toString())
                         .setPositiveButton("OK", null)
                         .show()
                 }

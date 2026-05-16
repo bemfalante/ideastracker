@@ -37,6 +37,7 @@ class BillsActivity : AppCompatActivity() {
                     promptNextMonth(bill)
                 }
             },
+            onDelete = { bill -> viewModel.delete(bill) },
             onLongClick = { bill -> showBillCrudDialog(bill) }
         )
         binding.rvBills.layoutManager = LinearLayoutManager(this)
@@ -59,7 +60,6 @@ class BillsActivity : AppCompatActivity() {
                 val calendar = Calendar.getInstance()
                 calendar.timeInMillis = bill.dueDate
                 calendar.add(Calendar.MONTH, 1)
-                // Rule 3: Update existing bill and remove strikethrough (uncheck)
                 viewModel.update(bill.copy(dueDate = calendar.timeInMillis, isPaid = false))
             }
             .setNegativeButton("No", null)
@@ -95,7 +95,6 @@ class BillsActivity : AppCompatActivity() {
                     if (bill == null) {
                         viewModel.insert(Bill(title = title, dueDate = calendar.timeInMillis))
                     } else {
-                        // Rule 2: Edit option
                         viewModel.update(bill.copy(title = title, dueDate = calendar.timeInMillis))
                     }
                 } catch (e: Exception) {
@@ -104,7 +103,6 @@ class BillsActivity : AppCompatActivity() {
             }
 
         if (bill != null) {
-            // Rule 2: Delete option
             builder.setNeutralButton("Delete") { _, _ -> viewModel.delete(bill) }
         }
 

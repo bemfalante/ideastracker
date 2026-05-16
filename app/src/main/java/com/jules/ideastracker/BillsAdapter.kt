@@ -11,6 +11,7 @@ import java.util.*
 
 class BillsAdapter(
     private val onCheckChanged: (Bill, Boolean) -> Unit,
+    private val onDelete: (Bill) -> Unit,
     private val onLongClick: (Bill) -> Unit
 ) : ListAdapter<Bill, BillsAdapter.BillViewHolder>(BillDiffCallback()) {
 
@@ -32,7 +33,15 @@ class BillsAdapter(
             binding.cbBill.isChecked = bill.isPaid
             binding.cbBill.setOnCheckedChangeListener { _, isChecked -> onCheckChanged(bill, isChecked) }
 
+            // Rule 1: Delete icon
+            binding.btnDeleteBill.setOnClickListener { onDelete(bill) }
+
+            // Rule 1: Edit on long press
             binding.root.setOnLongClickListener {
+                onLongClick(bill)
+                true
+            }
+            binding.cbBill.setOnLongClickListener {
                 onLongClick(bill)
                 true
             }
