@@ -61,21 +61,21 @@ class CalendarDialog : DialogFragment() {
                 layout.orientation = LinearLayout.VERTICAL
                 layout.setPadding(50, 20, 50, 20)
 
-                val textView = TextView(requireContext())
-                textView.text = "Select from ongoing ideas:"
-                layout.addView(textView)
-
-                val spinner = Spinner(requireContext())
-                spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, titles)
-                layout.addView(spinner)
-
                 val textViewOr = TextView(requireContext())
-                textViewOr.text = "\nOR enter a new task name:"
+                textViewOr.text = "Enter a task name:"
                 layout.addView(textViewOr)
 
                 val editText = EditText(requireContext())
                 editText.hint = "New task name"
                 layout.addView(editText)
+
+                val textView = TextView(requireContext())
+                textView.text = "\nOR select from ongoing ideas:"
+                layout.addView(textView)
+
+                val spinner = Spinner(requireContext())
+                spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, titles)
+                layout.addView(spinner)
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Select Task for $date")
@@ -119,21 +119,22 @@ class CalendarDialog : DialogFragment() {
                 } else {
                     val sb = StringBuilder()
                     var totalMillis = 0L
-                    val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
                     history.forEach {
                         totalMillis += it.durationMillis
-                        val totalSeconds = it.durationMillis / 1000
-                        val minutes = totalSeconds / 60
-                        val seconds = totalSeconds % 60
+                        // Rule 1: Show hours, minutes, seconds
+                        val h = it.durationMillis / 3600000
+                        val m = (it.durationMillis % 3600000) / 60000
+                        val s = (it.durationMillis % 60000) / 1000
                         val task = if (it.taskName != null) " [${it.taskName}]" else ""
-                        sb.append("${sdf.format(Date(it.timestamp))}: ${String.format("%02d:%02d", minutes, seconds)}$task\n")
+                        sb.append("${String.format("%02d:%02d:%02d", h, m, s)}$task\n")
                     }
 
-                    val totalSeconds = totalMillis / 1000
-                    val totalMinutes = totalSeconds / 60
-                    val remainingSeconds = totalSeconds % 60
-                    val totalString = "TOTAL TIME: ${String.format("%02d:%02d", totalMinutes, remainingSeconds)}\n\n"
+                    // Rule 1: Sum only hours and minutes
+                    val totalMinutes = totalMillis / 60000
+                    val hSum = totalMinutes / 60
+                    val mSum = totalMinutes % 60
+                    val totalString = "TOTAL TIME: ${String.format("%02dh:%02dm", hSum, mSum)}\n\n"
 
                     AlertDialog.Builder(requireContext())
                         .setTitle("History for $date")

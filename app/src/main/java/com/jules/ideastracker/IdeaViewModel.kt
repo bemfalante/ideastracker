@@ -71,10 +71,24 @@ class IdeaViewModel(private val dao: IdeaDao) : ViewModel() {
         dao.update(updatedIdea)
     }
 
-    fun moveToTop(idea: Idea) = viewModelScope.launch {
-        // We set manualOrder to be 1 less than the current minimum
-        val minOrder = dao.getMinManualOrder() ?: 0
-        dao.update(idea.copy(manualOrder = minOrder - 1))
+    fun moveUp(idea: Idea) = viewModelScope.launch {
+        val list = dao.getIdeasByStatusSync(idea.status.name)
+        val index = list.indexOfFirst { it.id == idea.id }
+        if (index > 0) {
+            val other = list[index - 1]
+            dao.update(idea.copy(manualOrder = other.manualOrder))
+            dao.update(other.copy(manualOrder = idea.manualOrder))
+        }
+    }
+
+    fun moveDown(idea: Idea) = viewModelScope.launch {
+        val list = dao.getIdeasByStatusSync(idea.status.name)
+        val index = list.indexOfFirst { it.id == idea.id }
+        if (index != -1 && index < list.size - 1) {
+            val other = list[index + 1]
+            dao.update(idea.copy(manualOrder = other.manualOrder))
+            dao.update(other.copy(manualOrder = idea.manualOrder))
+        }
     }
 
     fun updateStatus(idea: Idea, newStatus: IdeaStatus, dod: String? = null, nextSteps: String? = null, conclusion: String? = null) = viewModelScope.launch {

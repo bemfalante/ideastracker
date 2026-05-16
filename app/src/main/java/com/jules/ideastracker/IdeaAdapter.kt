@@ -15,7 +15,8 @@ class IdeaAdapter(
     private val onDelete: (Idea) -> Unit,
     private val onClick: (Idea) -> Unit,
     private val onShare: (Idea) -> Unit,
-    private val onMoveToTop: (Idea) -> Unit
+    private val onMoveUp: (Idea) -> Unit,
+    private val onMoveDown: (Idea) -> Unit
 ) : ListAdapter<Idea, IdeaAdapter.IdeaViewHolder>(IdeaDiffCallback()) {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -88,8 +89,9 @@ class IdeaAdapter(
             binding.btnDelete.setOnClickListener { onDelete(idea) }
             binding.btnShare.setOnClickListener { onShare(idea) }
 
-            // Rule 1: Go-to-the-top button
-            binding.btnToTop.setOnClickListener { onMoveToTop(idea) }
+            // Rule 2: Move Up and Move Down
+            binding.btnToTop.setOnClickListener { onMoveUp(idea) }
+            binding.btnToBottom.setOnClickListener { onMoveDown(idea) }
 
             binding.itemContainer.setOnClickListener { onClick(idea) }
             binding.itemContainer.setOnLongClickListener {

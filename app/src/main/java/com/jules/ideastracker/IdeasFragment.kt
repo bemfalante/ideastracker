@@ -20,8 +20,6 @@ class IdeasFragment : Fragment() {
         IdeaViewModelFactory(AppDatabase.getDatabase(requireContext()).ideaDao())
     }
 
-    private lateinit var adapter: IdeaAdapter
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentIdeasBinding.inflate(inflater, container, false)
         return binding.root
@@ -29,7 +27,7 @@ class IdeasFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val status = arguments?.getSerializable("status") as IdeaStatus
-        adapter = IdeaAdapter(
+        val adapter = IdeaAdapter(
             onMove = { idea, newStatus ->
                 if (newStatus == IdeaStatus.ONGOING || newStatus == IdeaStatus.DONE) {
                     showEditDialog(idea, true, newStatus)
@@ -40,7 +38,8 @@ class IdeasFragment : Fragment() {
             onDelete = { idea -> viewModel.delete(idea) },
             onClick = { idea -> showEditDialog(idea) },
             onShare = { idea -> shareAsText(idea) },
-            onMoveToTop = { idea -> viewModel.moveToTop(idea) }
+            onMoveUp = { idea -> viewModel.moveUp(idea) },
+            onMoveDown = { idea -> viewModel.moveDown(idea) }
         )
 
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
