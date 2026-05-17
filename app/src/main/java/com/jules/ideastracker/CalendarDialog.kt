@@ -35,10 +35,15 @@ class CalendarDialog : DialogFragment() {
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
             selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
 
+            val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val isToday = selectedDate == now
+
+            val options = if (isToday) arrayOf("Start Timer", "View History") else arrayOf("View History")
+
             AlertDialog.Builder(requireContext())
                 .setTitle("Date: $selectedDate")
-                .setItems(arrayOf("Start Timer", "View History")) { _, which ->
-                    if (which == 0) {
+                .setItems(options) { _, which ->
+                    if (isToday && which == 0) {
                         promptForTaskName(selectedDate)
                     } else {
                         viewHistory(selectedDate)
@@ -61,21 +66,21 @@ class CalendarDialog : DialogFragment() {
                 layout.orientation = LinearLayout.VERTICAL
                 layout.setPadding(50, 20, 50, 20)
 
-                val textViewOr = TextView(requireContext())
-                textViewOr.text = "Enter a task name:"
-                layout.addView(textViewOr)
-
-                val editText = EditText(requireContext())
-                editText.hint = "New task name"
-                layout.addView(editText)
-
                 val textView = TextView(requireContext())
-                textView.text = "\nOR select from ongoing ideas:"
+                textView.text = "Select from ongoing ideas:"
                 layout.addView(textView)
 
                 val spinner = Spinner(requireContext())
                 spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, titles)
                 layout.addView(spinner)
+
+                val textViewOr = TextView(requireContext())
+                textViewOr.text = "\nOR enter a new task name:"
+                layout.addView(textViewOr)
+
+                val editText = EditText(requireContext())
+                editText.hint = "New task name"
+                layout.addView(editText)
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Select Task for $date")
@@ -130,7 +135,7 @@ class CalendarDialog : DialogFragment() {
                         sb.append("${String.format("%02d:%02d:%02d", h, m, s)}$task\n")
                     }
 
-                    // Rule 1: Sum only hours and minutes
+                    // Rule 1: Total Sum only hours and minutes
                     val totalMinutes = totalMillis / 60000
                     val hSum = totalMinutes / 60
                     val mSum = totalMinutes % 60

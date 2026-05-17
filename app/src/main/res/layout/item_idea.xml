@@ -26,24 +26,6 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <ImageButton
-                android:id="@+id/btnToTop"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/arrow_up_float"
-                app:tint="@color/black" />
-
-            <ImageButton
-                android:id="@+id/btnToBottom"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/arrow_down_float"
-                app:tint="@color/black" />
-
             <TextView
                 android:id="@+id/tvCategory"
                 android:layout_width="wrap_content"
@@ -54,7 +36,8 @@
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp"
                 android:textSize="12sp"
-                android:textColor="@color/black" />
+                android:textColor="@color/black"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView

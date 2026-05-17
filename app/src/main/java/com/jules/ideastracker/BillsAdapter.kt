@@ -1,5 +1,6 @@
 package com.jules.ideastracker
 
+import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -10,7 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class BillsAdapter(
-    private val onCheckChanged: (Bill, Boolean) -> Unit,
+    private val onClick: (Bill) -> Unit,
     private val onDelete: (Bill) -> Unit,
     private val onLongClick: (Bill) -> Unit
 ) : ListAdapter<Bill, BillsAdapter.BillViewHolder>(BillDiffCallback()) {
@@ -28,20 +29,22 @@ class BillsAdapter(
 
     inner class BillViewHolder(private val binding: ItemBillBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(bill: Bill) {
-            binding.cbBill.text = "${bill.title} (${sdf.format(Date(bill.dueDate))})"
-            binding.cbBill.setOnCheckedChangeListener(null)
-            binding.cbBill.isChecked = bill.isPaid
-            binding.cbBill.setOnCheckedChangeListener { _, isChecked -> onCheckChanged(bill, isChecked) }
+            binding.tvBillTitle.text = "${bill.title} (${sdf.format(Date(bill.dueDate))})"
 
-            // Rule 1: Delete icon
+            if (bill.isPaid) {
+                binding.tvBillTitle.paintFlags = binding.tvBillTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+            } else {
+                binding.tvBillTitle.paintFlags = binding.tvBillTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            }
+
+            binding.tvBillTitle.setOnClickListener { onClick(bill) }
             binding.btnDeleteBill.setOnClickListener { onDelete(bill) }
 
-            // Rule 1: Edit on long press
             binding.root.setOnLongClickListener {
                 onLongClick(bill)
                 true
             }
-            binding.cbBill.setOnLongClickListener {
+            binding.tvBillTitle.setOnLongClickListener {
                 onLongClick(bill)
                 true
             }

@@ -37,9 +37,7 @@ class IdeasFragment : Fragment() {
             },
             onDelete = { idea -> viewModel.delete(idea) },
             onClick = { idea -> showEditDialog(idea) },
-            onShare = { idea -> shareAsText(idea) },
-            onMoveUp = { idea -> viewModel.moveUp(idea) },
-            onMoveDown = { idea -> viewModel.moveDown(idea) }
+            onShare = { idea -> shareAsText(idea) }
         )
 
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
@@ -62,7 +60,7 @@ class IdeasFragment : Fragment() {
     }
 
     private fun shareAsText(idea: Idea) {
-        val content = "TITLE: ${idea.title}\nCATEGORY: ${idea.category ?: "Uncategorized"}\nDESCRIPTION: ${idea.description}\nLINK: ${idea.link ?: "N/A"}\nSTATUS: ${idea.status}\nDEFINITION OF DONE: ${idea.definitionOfDone ?: "N/A"}\nNEXT STEPS: ${idea.nextSteps ?: "N/A"}\nCONCLUSION: ${idea.conclusion ?: "N/A"}"
+        val content = "TITLE: ${idea.title}\nDESCRIPTION: ${idea.description}\nLINK: ${idea.link ?: "N/A"}\nSTATUS: ${idea.status}\nDEFINITION OF DONE: ${idea.definitionOfDone ?: "N/A"}\nNEXT STEPS: ${idea.nextSteps ?: "N/A"}\nCONCLUSION: ${idea.conclusion ?: "N/A"}"
         try {
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                 type = "text/plain"

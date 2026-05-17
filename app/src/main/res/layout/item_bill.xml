@@ -5,8 +5,8 @@
     android:orientation="horizontal"
     android:padding="8dp"
     android:gravity="center_vertical">
-    <CheckBox
-        android:id="@+id/cbBill"
+    <TextView
+        android:id="@+id/tvBillTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"

@@ -14,9 +14,7 @@ class IdeaAdapter(
     private val onMove: (Idea, IdeaStatus) -> Unit,
     private val onDelete: (Idea) -> Unit,
     private val onClick: (Idea) -> Unit,
-    private val onShare: (Idea) -> Unit,
-    private val onMoveUp: (Idea) -> Unit,
-    private val onMoveDown: (Idea) -> Unit
+    private val onShare: (Idea) -> Unit
 ) : ListAdapter<Idea, IdeaAdapter.IdeaViewHolder>(IdeaDiffCallback()) {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -33,24 +31,41 @@ class IdeaAdapter(
     inner class IdeaViewHolder(private val binding: ItemIdeaBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(idea: Idea) {
             binding.tvTitle.text = idea.title
-            binding.tvCategory.text = idea.category ?: "Uncategorized"
-            binding.tvDescription.text = idea.description
+            binding.tvCategory.visibility = View.GONE
+
+            // Rule 4: Panel specific fields
+            when (idea.status) {
+                IdeaStatus.FUTURE -> {
+                    binding.tvDescription.visibility = View.VISIBLE
+                    binding.tvDescription.text = idea.description
+                    binding.tvNextSteps.visibility = View.GONE
+                    binding.tvConclusion.visibility = View.GONE
+                }
+                IdeaStatus.ONGOING -> {
+                    binding.tvDescription.visibility = View.GONE
+                    binding.tvNextSteps.visibility = if (idea.nextSteps.isNullOrEmpty()) View.GONE else View.VISIBLE
+                    binding.tvNextSteps.text = "Next Steps: ${idea.nextSteps}"
+                    binding.tvConclusion.visibility = View.GONE
+                }
+                IdeaStatus.DONE -> {
+                    binding.tvDescription.visibility = View.GONE
+                    binding.tvNextSteps.visibility = View.GONE
+                    binding.tvConclusion.visibility = if (idea.conclusion.isNullOrEmpty()) View.GONE else View.VISIBLE
+                    binding.tvConclusion.text = "Conclusion: ${idea.conclusion}"
+                }
+            }
+
             binding.tvLink.text = idea.link
             binding.tvLink.visibility = if (idea.link.isNullOrEmpty()) View.GONE else View.VISIBLE
 
-            if (idea.status == IdeaStatus.DONE) {
-                binding.tvDoD.visibility = if (idea.definitionOfDone.isNullOrEmpty()) View.GONE else View.VISIBLE
-                binding.tvDoD.text = "Definition of Done: ${idea.definitionOfDone}"
-                binding.tvNextSteps.visibility = View.GONE
-                binding.tvConclusion.visibility = if (idea.conclusion.isNullOrEmpty()) View.GONE else View.VISIBLE
-                binding.tvConclusion.text = "Conclusion: ${idea.conclusion}"
-            } else {
-                binding.tvDoD.visibility = if (idea.definitionOfDone.isNullOrEmpty()) View.GONE else View.VISIBLE
-                binding.tvDoD.text = "Definition of Done: ${idea.definitionOfDone}"
-                binding.tvNextSteps.visibility = if (idea.nextSteps.isNullOrEmpty()) View.GONE else View.VISIBLE
-                binding.tvNextSteps.text = "Next Steps: ${idea.nextSteps}"
-                binding.tvConclusion.visibility = View.GONE
-            }
+            // Rule 5: 4 lines limit for everything except Link
+            binding.tvDescription.maxLines = 4
+            binding.tvDescription.ellipsize = android.text.TextUtils.TruncateAt.END
+            binding.tvNextSteps.maxLines = 4
+            binding.tvNextSteps.ellipsize = android.text.TextUtils.TruncateAt.END
+            binding.tvConclusion.maxLines = 4
+            binding.tvConclusion.ellipsize = android.text.TextUtils.TruncateAt.END
+            binding.tvLink.maxLines = Int.MAX_VALUE
 
             val dateText = StringBuilder()
             dateText.append("Created: ${dateFormat.format(Date(idea.timestamp))}")
@@ -88,10 +103,6 @@ class IdeaAdapter(
 
             binding.btnDelete.setOnClickListener { onDelete(idea) }
             binding.btnShare.setOnClickListener { onShare(idea) }
-
-            // Rule 2: Move Up and Move Down
-            binding.btnToTop.setOnClickListener { onMoveUp(idea) }
-            binding.btnToBottom.setOnClickListener { onMoveDown(idea) }
 
             binding.itemContainer.setOnClickListener { onClick(idea) }
             binding.itemContainer.setOnLongClickListener {

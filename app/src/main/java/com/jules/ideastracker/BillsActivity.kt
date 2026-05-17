@@ -31,9 +31,10 @@ class BillsActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val adapter = BillsAdapter(
-            onCheckChanged = { bill, isChecked ->
-                viewModel.update(bill.copy(isPaid = isChecked))
-                if (isChecked) {
+            onClick = { bill ->
+                val newPaid = !bill.isPaid
+                viewModel.update(bill.copy(isPaid = newPaid))
+                if (newPaid) {
                     promptNextMonth(bill)
                 }
             },
@@ -44,6 +45,16 @@ class BillsActivity : AppCompatActivity() {
         binding.rvBills.adapter = adapter
 
         viewModel.allBills.observe(this) { bills ->
+            val now = Calendar.getInstance()
+            bills.forEach { bill ->
+                val billDate = Calendar.getInstance().apply { timeInMillis = bill.dueDate }
+                val isCurrentOrPastMonth = billDate.get(Calendar.YEAR) < now.get(Calendar.YEAR) ||
+                                           (billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) && billDate.get(Calendar.MONTH) <= now.get(Calendar.MONTH))
+
+                if (bill.isPaid && isCurrentOrPastMonth) {
+                    viewModel.update(bill.copy(isPaid = false))
+                }
+            }
             adapter.submitList(bills)
         }
 
@@ -60,7 +71,7 @@ class BillsActivity : AppCompatActivity() {
                 val calendar = Calendar.getInstance()
                 calendar.timeInMillis = bill.dueDate
                 calendar.add(Calendar.MONTH, 1)
-                viewModel.update(bill.copy(dueDate = calendar.timeInMillis, isPaid = false))
+                viewModel.update(bill.copy(dueDate = calendar.timeInMillis, isPaid = true))
             }
             .setNegativeButton("No", null)
             .show()
