@@ -31,7 +31,7 @@ data class TimerHistory(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val date: String, // format YYYY-MM-DD
     val durationMillis: Long,
-    val taskName: String? = null, // New field
+    val taskName: String? = null,
     val timestamp: Long = System.currentTimeMillis()
 ) : Serializable
 
@@ -41,4 +41,13 @@ data class Bill(
     val title: String,
     val dueDate: Long,
     val isPaid: Boolean = false
+) : Serializable
+
+@Entity(tableName = "calendar_events")
+data class CalendarEvent(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val date: String, // format YYYY-MM-DD
+    val title: String,
+    val hour: String? = null,
+    val timestamp: Long = System.currentTimeMillis()
 ) : Serializable

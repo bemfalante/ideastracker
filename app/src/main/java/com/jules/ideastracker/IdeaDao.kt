@@ -5,13 +5,13 @@ import androidx.room.*
 
 @Dao
 interface IdeaDao {
-    @Query("SELECT * FROM ideas WHERE status = 'FUTURE' ORDER BY manualOrder ASC, CASE WHEN :isAsc = 1 THEN timestamp END ASC, CASE WHEN :isAsc = 0 THEN timestamp END DESC")
+    @Query("SELECT * FROM ideas WHERE status = 'FUTURE' ORDER BY CASE WHEN :isAsc = 1 THEN timestamp END ASC, CASE WHEN :isAsc = 0 THEN timestamp END DESC, manualOrder ASC")
     fun getFutureIdeas(isAsc: Int): LiveData<List<Idea>>
 
-    @Query("SELECT * FROM ideas WHERE status = 'ONGOING' ORDER BY manualOrder ASC, CASE WHEN :isAsc = 1 THEN startedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN startedTimestamp END DESC")
+    @Query("SELECT * FROM ideas WHERE status = 'ONGOING' ORDER BY CASE WHEN :isAsc = 1 THEN startedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN startedTimestamp END DESC, manualOrder ASC")
     fun getOngoingIdeas(isAsc: Int): LiveData<List<Idea>>
 
-    @Query("SELECT * FROM ideas WHERE status = 'DONE' ORDER BY manualOrder ASC, CASE WHEN :isAsc = 1 THEN finishedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN finishedTimestamp END DESC")
+    @Query("SELECT * FROM ideas WHERE status = 'DONE' ORDER BY CASE WHEN :isAsc = 1 THEN finishedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN finishedTimestamp END DESC, manualOrder ASC")
     fun getDoneIdeas(isAsc: Int): LiveData<List<Idea>>
 
     @Query("SELECT * FROM ideas WHERE status = :status ORDER BY manualOrder ASC")
@@ -20,13 +20,13 @@ interface IdeaDao {
     @Query("SELECT * FROM ideas WHERE status = 'ONGOING'")
     suspend fun getOngoingIdeasSync(): List<Idea>
 
-    @Query("SELECT * FROM ideas WHERE (title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%') AND status = 'FUTURE' ORDER BY manualOrder ASC, CASE WHEN :isAsc = 1 THEN timestamp END ASC, CASE WHEN :isAsc = 0 THEN timestamp END DESC")
+    @Query("SELECT * FROM ideas WHERE (title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%') AND status = 'FUTURE' ORDER BY CASE WHEN :isAsc = 1 THEN timestamp END ASC, CASE WHEN :isAsc = 0 THEN timestamp END DESC")
     fun searchFutureIdeas(query: String, isAsc: Int): LiveData<List<Idea>>
 
-    @Query("SELECT * FROM ideas WHERE (title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%') AND status = 'ONGOING' ORDER BY manualOrder ASC, CASE WHEN :isAsc = 1 THEN startedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN startedTimestamp END DESC")
+    @Query("SELECT * FROM ideas WHERE (title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%') AND status = 'ONGOING' ORDER BY CASE WHEN :isAsc = 1 THEN startedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN startedTimestamp END DESC")
     fun searchOngoingIdeas(query: String, isAsc: Int): LiveData<List<Idea>>
 
-    @Query("SELECT * FROM ideas WHERE (title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%') AND status = 'DONE' ORDER BY manualOrder ASC, CASE WHEN :isAsc = 1 THEN finishedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN finishedTimestamp END DESC")
+    @Query("SELECT * FROM ideas WHERE (title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%') AND status = 'DONE' ORDER BY CASE WHEN :isAsc = 1 THEN finishedTimestamp END ASC, CASE WHEN :isAsc = 0 THEN finishedTimestamp END DESC")
     fun searchDoneIdeas(query: String, isAsc: Int): LiveData<List<Idea>>
 
     @Insert

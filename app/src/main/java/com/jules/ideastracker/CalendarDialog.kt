@@ -38,21 +38,55 @@ class CalendarDialog : DialogFragment() {
             val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val isToday = selectedDate == now
 
-            val options = if (isToday) arrayOf("Start Timer", "View History") else arrayOf("View History")
+            val options = mutableListOf<String>()
+            if (isToday) options.add("Start Timer")
+            options.add("Add Event")
+            options.add("View History")
 
             AlertDialog.Builder(requireContext())
                 .setTitle("Date: $selectedDate")
-                .setItems(options) { _, which ->
-                    if (isToday && which == 0) {
-                        promptForTaskName(selectedDate)
-                    } else {
-                        viewHistory(selectedDate)
+                .setItems(options.toTypedArray()) { _, which ->
+                    when (options[which]) {
+                        "Start Timer" -> promptForTaskName(selectedDate)
+                        "Add Event" -> promptForEvent(selectedDate)
+                        "View History" -> viewHistory(selectedDate)
                     }
                 }
                 .show()
         }
 
         return calendarView
+    }
+
+    private fun promptForEvent(date: String) {
+        val layout = LinearLayout(requireContext())
+        layout.orientation = LinearLayout.VERTICAL
+        layout.setPadding(50, 20, 50, 20)
+
+        val etTitle = EditText(requireContext())
+        etTitle.hint = "Event Title"
+        layout.addView(etTitle)
+
+        val etHour = EditText(requireContext())
+        etHour.hint = "Hour (optional, e.g. 14:30)"
+        layout.addView(etHour)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Add Event to $date")
+            .setView(layout)
+            .setPositiveButton("Save") { _, _ ->
+                val title = etTitle.text.toString()
+                val hour = etHour.text.toString().takeIf { it.isNotBlank() }
+                if (title.isNotBlank()) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        AppDatabase.getDatabase(requireContext()).calendarEventDao().insert(
+                            CalendarEvent(date = date, title = title, hour = hour)
+                        )
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun promptForTaskName(date: String) {
@@ -66,21 +100,21 @@ class CalendarDialog : DialogFragment() {
                 layout.orientation = LinearLayout.VERTICAL
                 layout.setPadding(50, 20, 50, 20)
 
-                val textView = TextView(requireContext())
-                textView.text = "Select from ongoing ideas:"
-                layout.addView(textView)
-
-                val spinner = Spinner(requireContext())
-                spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, titles)
-                layout.addView(spinner)
-
                 val textViewOr = TextView(requireContext())
-                textViewOr.text = "\nOR enter a new task name:"
+                textViewOr.text = "Enter a task name:"
                 layout.addView(textViewOr)
 
                 val editText = EditText(requireContext())
                 editText.hint = "New task name"
                 layout.addView(editText)
+
+                val textView = TextView(requireContext())
+                textView.text = "\nOR select from ongoing ideas:"
+                layout.addView(textView)
+
+                val spinner = Spinner(requireContext())
+                spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, titles)
+                layout.addView(spinner)
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Select Task for $date")
@@ -117,17 +151,27 @@ class CalendarDialog : DialogFragment() {
 
     private fun viewHistory(date: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val history = AppDatabase.getDatabase(requireContext()).timerDao().getHistoryByDateSync(date)
-            withContext(Dispatchers.Main) {
-                if (history.isEmpty()) {
-                    Toast.makeText(context, "No history for $date", Toast.LENGTH_SHORT).show()
-                } else {
-                    val sb = StringBuilder()
-                    var totalMillis = 0L
+            val db = AppDatabase.getDatabase(requireContext())
+            val timerHistory = db.timerDao().getHistoryByDateSync(date)
+            val events = db.calendarEventDao().getEventsByDateSync(date)
 
-                    history.forEach {
+            withContext(Dispatchers.Main) {
+                val sb = StringBuilder()
+
+                if (events.isNotEmpty()) {
+                    sb.append("--- EVENTS ---\n")
+                    events.forEach {
+                        val h = if (it.hour != null) "[${it.hour}] " else ""
+                        sb.append("$h${it.title}\n")
+                    }
+                    sb.append("\n")
+                }
+
+                if (timerHistory.isNotEmpty()) {
+                    sb.append("--- TASKS ---\n")
+                    var totalMillis = 0L
+                    timerHistory.forEach {
                         totalMillis += it.durationMillis
-                        // Rule 1: Show hours, minutes, seconds
                         val h = it.durationMillis / 3600000
                         val m = (it.durationMillis % 3600000) / 60000
                         val s = (it.durationMillis % 60000) / 1000
@@ -135,7 +179,6 @@ class CalendarDialog : DialogFragment() {
                         sb.append("${String.format("%02d:%02d:%02d", h, m, s)}$task\n")
                     }
 
-                    // Rule 1: Total Sum only hours and minutes
                     val totalMinutes = totalMillis / 60000
                     val hSum = totalMinutes / 60
                     val mSum = totalMinutes % 60
@@ -146,6 +189,14 @@ class CalendarDialog : DialogFragment() {
                         .setMessage(totalString + sb.toString())
                         .setPositiveButton("OK", null)
                         .show()
+                } else if (events.isNotEmpty()) {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("History for $date")
+                        .setMessage(sb.toString())
+                        .setPositiveButton("OK", null)
+                        .show()
+                } else {
+                    Toast.makeText(context, "No history for $date", Toast.LENGTH_SHORT).show()
                 }
             }
         }

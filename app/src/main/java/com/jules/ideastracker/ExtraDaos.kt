@@ -29,3 +29,18 @@ interface TimerDao {
     @Insert
     suspend fun insert(history: TimerHistory)
 }
+
+@Dao
+interface CalendarEventDao {
+    @Query("SELECT * FROM calendar_events WHERE date = :date ORDER BY timestamp ASC")
+    fun getEventsByDate(date: String): LiveData<List<CalendarEvent>>
+
+    @Query("SELECT * FROM calendar_events WHERE date = :date ORDER BY timestamp ASC")
+    suspend fun getEventsByDateSync(date: String): List<CalendarEvent>
+
+    @Insert
+    suspend fun insert(event: CalendarEvent)
+
+    @Delete
+    suspend fun delete(event: CalendarEvent)
+}
