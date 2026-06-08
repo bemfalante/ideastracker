@@ -48,31 +48,44 @@ class CalendarDialog : DialogFragment() {
         root.addView(calendarView)
         root.addView(tvEventsWarning)
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val db = AppDatabase.getDatabase(requireContext())
-            // For simplicity, let's just get all events.
-            // If there are many, we might want to filter for current/future.
-            val allEvents = db.calendarEventDao().getAllEventsSync()
-            val datesWithEvents = allEvents.map { it.date }.distinct().sorted()
+        val updateEventsWarning = { year: Int, month: Int ->
+            CoroutineScope(Dispatchers.IO).launch {
+                val db = AppDatabase.getDatabase(requireContext())
+                val allEvents = db.calendarEventDao().getAllEventsSync()
 
-            if (datesWithEvents.isNotEmpty()) {
+                // Filter for selected year and month
+                val targetMonth = String.format("%04d-%02d", year, month + 1)
+                val datesWithEvents = allEvents
+                    .filter { it.date.startsWith(targetMonth) }
+                    .map { it.date }
+                    .distinct()
+                    .sorted()
+
                 withContext(Dispatchers.Main) {
-                    val formattedDates = datesWithEvents.map { dateStr ->
-                        // Convert YYYY-MM-DD to DD/MM
-                        try {
-                            val parts = dateStr.split("-")
-                            "${parts[2]}/${parts[1]}"
-                        } catch (e: Exception) {
-                            dateStr
-                        }
-                    }.joinToString(", ")
-                    tvEventsWarning.text = "Days with events: $formattedDates"
-                    tvEventsWarning.visibility = View.VISIBLE
+                    if (datesWithEvents.isNotEmpty()) {
+                        val formattedDates = datesWithEvents.map { dateStr ->
+                            try {
+                                val parts = dateStr.split("-")
+                                "${parts[2]}/${parts[1]}"
+                            } catch (e: Exception) {
+                                dateStr
+                            }
+                        }.joinToString(", ")
+                        tvEventsWarning.text = "Days with events: $formattedDates"
+                        tvEventsWarning.visibility = View.VISIBLE
+                    } else {
+                        tvEventsWarning.visibility = View.GONE
+                    }
                 }
             }
         }
 
+        // Initial call for the current date
+        val nowCal = Calendar.getInstance()
+        updateEventsWarning(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH))
+
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
+            updateEventsWarning(year, month)
             selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
 
             val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())

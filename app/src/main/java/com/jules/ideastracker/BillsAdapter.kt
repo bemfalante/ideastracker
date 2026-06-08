@@ -34,20 +34,18 @@ class BillsAdapter(
             val now = Calendar.getInstance()
             val billDate = Calendar.getInstance().apply { timeInMillis = bill.dueDate }
 
-            val isFutureMonth = (billDate.get(Calendar.YEAR) > now.get(Calendar.YEAR)) ||
-                                (billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) && billDate.get(Calendar.MONTH) > now.get(Calendar.MONTH))
-
             val isCurrentMonth = billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
                                  billDate.get(Calendar.MONTH) == now.get(Calendar.MONTH)
 
-            // Rules:
-            // - Future month: Faded
-            // - Current month & Paid: Faded
-            // - Current month & Unpaid: Normal
-            // - Past month & Unpaid: Normal
-            // - Past month & Paid: Faded (All bills not for current month must be shadowed)
+            // Simplified Rules:
+            // - Unpaid (Current or Past month): Normal
+            // - Everything else (Paid or Future month): Faded
 
-            val shouldFade = isFutureMonth || bill.isPaid
+            val isPastMonth = (billDate.get(Calendar.YEAR) < now.get(Calendar.YEAR)) ||
+                               (billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) && billDate.get(Calendar.MONTH) < now.get(Calendar.MONTH))
+
+            val isCurrentOrPast = isCurrentMonth || isPastMonth
+            val shouldFade = !(isCurrentOrPast && !bill.isPaid)
 
             binding.root.alpha = if (shouldFade) 0.4f else 1.0f
 
