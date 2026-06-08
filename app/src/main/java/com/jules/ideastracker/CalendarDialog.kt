@@ -8,6 +8,7 @@ import android.widget.CalendarView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import java.text.SimpleDateFormat
 import java.util.*
@@ -26,11 +27,50 @@ class CalendarDialog : DialogFragment() {
     private var selectedDate: String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        val root = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+
         val calendarView = CalendarView(requireContext())
         calendarView.layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
+
+        val tvEventsWarning = TextView(requireContext()).apply {
+            setPadding(32, 16, 32, 16)
+            textSize = 14f
+            visibility = View.GONE
+            setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark))
+        }
+
+        root.addView(calendarView)
+        root.addView(tvEventsWarning)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getDatabase(requireContext())
+            // For simplicity, let's just get all events.
+            // If there are many, we might want to filter for current/future.
+            val allEvents = db.calendarEventDao().getAllEventsSync()
+            val datesWithEvents = allEvents.map { it.date }.distinct().sorted()
+
+            if (datesWithEvents.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    val formattedDates = datesWithEvents.map { dateStr ->
+                        // Convert YYYY-MM-DD to DD/MM
+                        try {
+                            val parts = dateStr.split("-")
+                            "${parts[2]}/${parts[1]}"
+                        } catch (e: Exception) {
+                            dateStr
+                        }
+                    }.joinToString(", ")
+                    tvEventsWarning.text = "Days with events: $formattedDates"
+                    tvEventsWarning.visibility = View.VISIBLE
+                }
+            }
+        }
 
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
             selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
@@ -55,7 +95,7 @@ class CalendarDialog : DialogFragment() {
                 .show()
         }
 
-        return calendarView
+        return root
     }
 
     private fun promptForEvent(date: String) {

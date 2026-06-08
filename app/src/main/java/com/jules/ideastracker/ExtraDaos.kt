@@ -38,6 +38,9 @@ interface CalendarEventDao {
     @Query("SELECT * FROM calendar_events WHERE date = :date ORDER BY timestamp ASC")
     suspend fun getEventsByDateSync(date: String): List<CalendarEvent>
 
+    @Query("SELECT * FROM calendar_events ORDER BY date ASC")
+    suspend fun getAllEventsSync(): List<CalendarEvent>
+
     @Insert
     suspend fun insert(event: CalendarEvent)
 

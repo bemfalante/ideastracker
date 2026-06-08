@@ -1,11 +1,14 @@
 package com.jules.ideastracker
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.viewpager2.widget.ViewPager2
 import com.jules.ideastracker.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -81,6 +84,27 @@ class MainActivity : AppCompatActivity() {
         viewModel.lastInsertedId.observe(this) { id ->
             // Move to Future panel (index 2) because new ideas are created as FUTURE
             binding.viewPager.setCurrentItem(2, true)
+        }
+
+        val db = AppDatabase.getDatabase(this)
+        db.billDao().getAllBills().observe(this) { bills ->
+            val now = Calendar.getInstance()
+            val currentYear = now.get(Calendar.YEAR)
+            val currentMonth = now.get(Calendar.MONTH)
+
+            val hasUnpaidCurrentMonth = bills.any { bill ->
+                val billDate = Calendar.getInstance().apply { timeInMillis = bill.dueDate }
+                val isCurrentMonth = billDate.get(Calendar.YEAR) == currentYear &&
+                                    billDate.get(Calendar.MONTH) == currentMonth
+                !bill.isPaid && isCurrentMonth
+            }
+
+            val color = if (hasUnpaidCurrentMonth) {
+                ContextCompat.getColor(this, android.R.color.holo_red_light)
+            } else {
+                ContextCompat.getColor(this, android.R.color.holo_green_light)
+            }
+            binding.viewBillsBadge.backgroundTintList = ColorStateList.valueOf(color)
         }
     }
 
