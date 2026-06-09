@@ -34,20 +34,18 @@ class BillsAdapter(
             val now = Calendar.getInstance()
             val billDate = Calendar.getInstance().apply { timeInMillis = bill.dueDate }
 
-            val isCurrentMonth = billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-                                 billDate.get(Calendar.MONTH) == now.get(Calendar.MONTH)
+            // Simple Rules:
+            // - NORMAL: Unpaid AND (Current Month OR Past Month)
+            // - FADED: Everything else (Paid OR Future Month)
 
-            // Simplified Rules:
-            // - Unpaid (Current or Past month): Normal
-            // - Everything else (Paid or Future month): Faded
+            val isFuture = (billDate.get(Calendar.YEAR) > now.get(Calendar.YEAR)) ||
+                           (billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) && billDate.get(Calendar.MONTH) > now.get(Calendar.MONTH))
 
-            val isPastMonth = (billDate.get(Calendar.YEAR) < now.get(Calendar.YEAR)) ||
-                               (billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) && billDate.get(Calendar.MONTH) < now.get(Calendar.MONTH))
+            val shouldFade = bill.isPaid || isFuture
 
-            val isCurrentOrPast = isCurrentMonth || isPastMonth
-            val shouldFade = !(isCurrentOrPast && !bill.isPaid)
-
-            binding.root.alpha = if (shouldFade) 0.4f else 1.0f
+            val alpha = if (shouldFade) 0.4f else 1.0f
+            binding.tvBillTitle.alpha = alpha
+            binding.btnDeleteBill.alpha = alpha
 
             // Remove strikethrough as requested
             binding.tvBillTitle.paintFlags = binding.tvBillTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()

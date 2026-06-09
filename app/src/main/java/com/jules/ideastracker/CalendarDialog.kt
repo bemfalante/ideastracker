@@ -84,6 +84,23 @@ class CalendarDialog : DialogFragment() {
         val nowCal = Calendar.getInstance()
         updateEventsWarning(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH))
 
+        // Monitor for month changes. CalendarView doesn't have a direct listener for month swipes,
+        // but we can check if the displayed date changes via its ViewTreeObserver.
+        calendarView.viewTreeObserver.addOnGlobalLayoutListener {
+            val cal = Calendar.getInstance()
+            cal.timeInMillis = calendarView.date
+            // We'll use a tag to store the last known month to avoid redundant updates
+            val lastMonth = calendarView.getTag(R.id.viewPager) as? Int ?: -1
+            val currentMonth = cal.get(Calendar.MONTH)
+            val currentYear = cal.get(Calendar.YEAR)
+            val composite = currentYear * 100 + currentMonth
+
+            if (composite != lastMonth) {
+                calendarView.setTag(R.id.viewPager, composite)
+                updateEventsWarning(currentYear, currentMonth)
+            }
+        }
+
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
             updateEventsWarning(year, month)
             selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)

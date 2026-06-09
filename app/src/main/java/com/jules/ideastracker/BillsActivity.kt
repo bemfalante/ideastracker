@@ -45,16 +45,6 @@ class BillsActivity : AppCompatActivity() {
         binding.rvBills.adapter = adapter
 
         viewModel.allBills.observe(this) { bills ->
-            val now = Calendar.getInstance()
-            bills.forEach { bill ->
-                val billDate = Calendar.getInstance().apply { timeInMillis = bill.dueDate }
-                val isCurrentOrPastMonth = billDate.get(Calendar.YEAR) < now.get(Calendar.YEAR) ||
-                                           (billDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) && billDate.get(Calendar.MONTH) <= now.get(Calendar.MONTH))
-
-                if (bill.isPaid && isCurrentOrPastMonth) {
-                    viewModel.update(bill.copy(isPaid = false))
-                }
-            }
             adapter.submitList(bills)
         }
 
