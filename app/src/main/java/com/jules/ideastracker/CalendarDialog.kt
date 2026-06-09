@@ -1,22 +1,17 @@
 package com.jules.ideastracker
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CalendarView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import java.text.SimpleDateFormat
 import java.util.*
 import android.content.Intent
-import android.widget.ArrayAdapter
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.Spinner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,114 +19,172 @@ import kotlinx.coroutines.withContext
 
 class CalendarDialog : DialogFragment() {
 
+    private var currentCalendar: Calendar = Calendar.getInstance()
     private var selectedDate: String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    private lateinit var calendarGrid: GridLayout
+    private lateinit var tvMonthTitle: TextView
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val root = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            setPadding(16, 16, 16, 16)
         }
 
-        val calendarView = CalendarView(requireContext())
-        calendarView.layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-
-        val tvEventsWarning = TextView(requireContext()).apply {
-            setPadding(32, 16, 32, 16)
-            textSize = 14f
-            visibility = View.GONE
-            setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark))
+        // Header: Arrows + Month Title
+        val header = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         }
 
-        root.addView(calendarView)
-        root.addView(tvEventsWarning)
-
-        val updateEventsWarning = { year: Int, month: Int ->
-            CoroutineScope(Dispatchers.IO).launch {
-                val db = AppDatabase.getDatabase(requireContext())
-                val allEvents = db.calendarEventDao().getAllEventsSync()
-
-                // Filter for selected year and month
-                val targetMonth = String.format("%04d-%02d", year, month + 1)
-                val datesWithEvents = allEvents
-                    .filter { it.date.startsWith(targetMonth) }
-                    .map { it.date }
-                    .distinct()
-                    .sorted()
-
-                withContext(Dispatchers.Main) {
-                    if (datesWithEvents.isNotEmpty()) {
-                        val formattedDates = datesWithEvents.map { dateStr ->
-                            try {
-                                val parts = dateStr.split("-")
-                                "${parts[2]}/${parts[1]}"
-                            } catch (e: Exception) {
-                                dateStr
-                            }
-                        }.joinToString(", ")
-                        tvEventsWarning.text = "Days with events: $formattedDates"
-                        tvEventsWarning.visibility = View.VISIBLE
-                    } else {
-                        tvEventsWarning.visibility = View.GONE
-                    }
-                }
+        val btnPrev = ImageButton(requireContext()).apply {
+            setImageResource(android.R.drawable.ic_media_previous)
+            background = ContextCompat.getDrawable(context, android.R.drawable.screen_background_light_transparent)
+            setOnClickListener {
+                currentCalendar.add(Calendar.MONTH, -1)
+                updateCalendar()
             }
         }
 
-        // Initial call for the current date
-        val nowCal = Calendar.getInstance()
-        updateEventsWarning(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH))
+        tvMonthTitle = TextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            gravity = Gravity.CENTER
+            textSize = 18f
+            setPadding(0, 0, 0, 0)
+        }
 
-
-        // Safer polling: check for date changes every 400ms while the dialog is visible
-        val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        val pollTask = object : Runnable {
-            var lastMonth = -1
-            override fun run() {
-                if (!isAdded || isRemoving) return
-
-                // CalendarView's date doesn't always update immediately on swipe/arrow click
-                // but its internal month title does. However, let's stick to date polling
-                // as it's more standard. 400ms is a good balance.
-                val cal = Calendar.getInstance()
-                cal.timeInMillis = calendarView.date
-                val currentMonth = cal.get(Calendar.YEAR) * 100 + cal.get(Calendar.MONTH)
-                if (currentMonth != lastMonth) {
-                    lastMonth = currentMonth
-                    updateEventsWarning(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH))
-                }
-                handler.postDelayed(this, 400)
+        val btnNext = ImageButton(requireContext()).apply {
+            setImageResource(android.R.drawable.ic_media_next)
+            background = ContextCompat.getDrawable(context, android.R.drawable.screen_background_light_transparent)
+            setOnClickListener {
+                currentCalendar.add(Calendar.MONTH, 1)
+                updateCalendar()
             }
         }
-        handler.post(pollTask)
 
-        calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            updateEventsWarning(year, month)
-            selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
+        header.addView(btnPrev)
+        header.addView(tvMonthTitle)
+        header.addView(btnNext)
+        root.addView(header)
 
-            val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val isToday = selectedDate == now
-
-            val options = mutableListOf<String>()
-            if (isToday) options.add("Start Timer")
-            options.add("Add Event")
-            options.add("View History")
-
-            AlertDialog.Builder(requireContext())
-                .setTitle("Date: $selectedDate")
-                .setItems(options.toTypedArray()) { _, which ->
-                    when (options[which]) {
-                        "Start Timer" -> promptForTaskName(selectedDate)
-                        "Add Event" -> promptForEvent(selectedDate)
-                        "View History" -> viewHistory(selectedDate)
-                    }
-                }
-                .show()
+        // Day labels (Sun, Mon, etc.)
+        val daysHeader = GridLayout(requireContext()).apply {
+            columnCount = 7
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         }
+        val dayNames = arrayOf("S", "M", "T", "W", "T", "F", "S")
+        for (day in dayNames) {
+            val tv = TextView(requireContext()).apply {
+                text = day
+                gravity = Gravity.CENTER
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = 0
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                    columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                }
+            }
+            daysHeader.addView(tv)
+        }
+        root.addView(daysHeader)
+
+        calendarGrid = GridLayout(requireContext()).apply {
+            columnCount = 7
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        }
+        root.addView(calendarGrid)
+
+        updateCalendar()
 
         return root
+    }
+
+    private fun updateCalendar() {
+        calendarGrid.removeAllViews()
+        val sdf = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+        tvMonthTitle.text = sdf.format(currentCalendar.time)
+
+        val cal = currentCalendar.clone() as Calendar
+        cal.set(Calendar.DAY_OF_MONTH, 1)
+        val firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1 // 0-indexed
+        val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+        // Fetch events for this month
+        val targetMonthPrefix = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(cal.time)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getDatabase(requireContext())
+            val events = db.calendarEventDao().getAllEventsSync()
+            val eventDates = events.filter { it.date.startsWith(targetMonthPrefix) }.map { it.date }.toSet()
+
+            withContext(Dispatchers.Main) {
+                // Empty cells before first day
+                for (i in 0 until firstDayOfWeek) {
+                    calendarGrid.addView(View(requireContext()).apply {
+                        layoutParams = GridLayout.LayoutParams().apply {
+                            width = 0
+                            height = 80 // Adjust as needed
+                            columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                        }
+                    })
+                }
+
+                // Days of the month
+                for (day in 1..daysInMonth) {
+                    val dayCal = cal.clone() as Calendar
+                    dayCal.set(Calendar.DAY_OF_MONTH, day)
+                    val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(dayCal.time)
+                    val hasEvent = eventDates.contains(dateStr)
+
+                    val dayView = FrameLayout(requireContext()).apply {
+                        layoutParams = GridLayout.LayoutParams().apply {
+                            width = 0
+                            height = 100
+                            columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                        }
+
+                        if (hasEvent) {
+                            val circle = ContextCompat.getDrawable(context, R.drawable.circle_outline)
+                            background = circle
+                        }
+
+                        val tv = TextView(context).apply {
+                            text = day.toString()
+                            gravity = Gravity.CENTER
+                            layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+                        }
+                        addView(tv)
+
+                        setOnClickListener {
+                            onDayClick(dateStr)
+                        }
+                    }
+                    calendarGrid.addView(dayView)
+                }
+            }
+        }
+    }
+
+    private fun onDayClick(date: String) {
+        selectedDate = date
+        val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val isToday = selectedDate == now
+
+        val options = mutableListOf<String>()
+        if (isToday) options.add("Start Timer")
+        options.add("Add Event")
+        options.add("View History")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Date: $selectedDate")
+            .setItems(options.toTypedArray()) { _, which ->
+                when (options[which]) {
+                    "Start Timer" -> promptForTaskName(selectedDate)
+                    "Add Event" -> promptForEvent(selectedDate)
+                    "View History" -> viewHistory(selectedDate)
+                }
+            }
+            .show()
     }
 
     private fun promptForEvent(date: String) {
@@ -158,6 +211,9 @@ class CalendarDialog : DialogFragment() {
                         AppDatabase.getDatabase(requireContext()).calendarEventDao().insert(
                             CalendarEvent(date = date, title = title, hour = hour)
                         )
+                                withContext(Dispatchers.Main) {
+                                    updateCalendar()
+                                }
                     }
                 }
             }
