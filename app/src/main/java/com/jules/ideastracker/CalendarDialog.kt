@@ -84,45 +84,17 @@ class CalendarDialog : DialogFragment() {
         val nowCal = Calendar.getInstance()
         updateEventsWarning(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH))
 
-        // Monitor for month changes by finding the next/previous buttons or relying on a frequent check
-        // Standard CalendarView is a bit tricky. We'll try to find buttons by content description.
-        root.post {
-            val findButtons = { view: View ->
-                val out = mutableListOf<View>()
-                val queue = mutableListOf(view)
-                while (queue.isNotEmpty()) {
-                    val v = queue.removeAt(0)
-                    if (v.contentDescription?.toString()?.contains("month", ignoreCase = true) == true ||
-                        v.contentDescription?.toString()?.contains("mês", ignoreCase = true) == true) {
-                        out.add(v)
-                    }
-                    if (v is ViewGroup) {
-                        for (i in 0 until v.childCount) {
-                            queue.add(v.getChildAt(i))
-                        }
-                    }
-                }
-                out
-            }
 
-            findButtons(calendarView).forEach { button ->
-                button.setOnClickListener {
-                    button.performClick() // Ensure original behavior
-                    root.postDelayed({
-                        val cal = Calendar.getInstance()
-                        cal.timeInMillis = calendarView.date
-                        updateEventsWarning(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH))
-                    }, 100)
-                }
-            }
-        }
-
-        // Fallback: poll for date changes every 500ms while the dialog is visible
+        // Safer polling: check for date changes every 400ms while the dialog is visible
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val pollTask = object : Runnable {
             var lastMonth = -1
             override fun run() {
-                if (!isAdded) return
+                if (!isAdded || isRemoving) return
+
+                // CalendarView's date doesn't always update immediately on swipe/arrow click
+                // but its internal month title does. However, let's stick to date polling
+                // as it's more standard. 400ms is a good balance.
                 val cal = Calendar.getInstance()
                 cal.timeInMillis = calendarView.date
                 val currentMonth = cal.get(Calendar.YEAR) * 100 + cal.get(Calendar.MONTH)
@@ -130,7 +102,7 @@ class CalendarDialog : DialogFragment() {
                     lastMonth = currentMonth
                     updateEventsWarning(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH))
                 }
-                handler.postDelayed(this, 500)
+                handler.postDelayed(this, 400)
             }
         }
         handler.post(pollTask)
