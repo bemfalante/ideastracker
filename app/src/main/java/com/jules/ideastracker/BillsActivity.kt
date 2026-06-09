@@ -61,7 +61,8 @@ class BillsActivity : AppCompatActivity() {
                 val calendar = Calendar.getInstance()
                 calendar.timeInMillis = bill.dueDate
                 calendar.add(Calendar.MONTH, 1)
-                viewModel.update(bill.copy(dueDate = calendar.timeInMillis, isPaid = true))
+                // New bill for next month should NOT be paid yet
+                viewModel.update(bill.copy(dueDate = calendar.timeInMillis, isPaid = false))
             }
             .setNegativeButton("No", null)
             .show()
